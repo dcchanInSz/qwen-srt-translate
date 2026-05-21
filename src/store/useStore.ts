@@ -79,8 +79,8 @@ export const useStore = create<AppState>((set, get) => ({
 
       const newEntry: SubtitleEntry = {
         id: Math.max(...state.entries.map((e) => e.id)) + 1 + Math.random(),
-        startTime: entry.startTime,
-        endTime: entry.endTime,
+        startTime: "",
+        endTime: "",
         original: "",
         translated: secondHalf,
       };
@@ -99,7 +99,6 @@ export const useStore = create<AppState>((set, get) => ({
       const entries = [...state.entries];
       entries[index - 1] = {
         ...above,
-        endTime: current.endTime,
         translated: (above.translated || "") + "\n" + (current.translated || ""),
         translatedAt: Date.now(),
       };
