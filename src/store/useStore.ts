@@ -77,17 +77,25 @@ export const useStore = create<AppState>((set, get) => ({
       const secondHalf = t.slice(mid).trim();
       if (!firstHalf || !secondHalf) return state;
 
-      const newEntry: SubtitleEntry = {
-        id: Math.max(...state.entries.map((e) => e.id)) + 1 + Math.random(),
+      const entries = [...state.entries];
+      entries[index] = { ...entry, translated: firstHalf, translatedAt: Date.now() };
+
+      entries.push({
+        id: Math.max(...entries.map((e) => e.id)) + 1 + Math.random(),
         startTime: "",
         endTime: "",
         original: "",
+        translated: "",
+      });
+
+      for (let k = entries.length - 1; k > index + 1; k--) {
+        entries[k] = { ...entries[k], translated: entries[k - 1].translated };
+      }
+      entries[index + 1] = {
+        ...entries[index + 1],
         translated: secondHalf,
       };
 
-      const entries = [...state.entries];
-      entries[index] = { ...entry, translated: firstHalf, translatedAt: Date.now() };
-      entries.splice(index + 1, 0, newEntry);
       return { entries };
     }),
 
@@ -97,12 +105,26 @@ export const useStore = create<AppState>((set, get) => ({
       const above = state.entries[index - 1];
       const current = state.entries[index];
       const entries = [...state.entries];
+
       entries[index - 1] = {
         ...above,
         translated: (above.translated || "") + "\n" + (current.translated || ""),
         translatedAt: Date.now(),
       };
-      entries.splice(index, 1);
+
+      for (let k = index; k < entries.length - 1; k++) {
+        entries[k] = { ...entries[k], translated: entries[k + 1].translated };
+      }
+      entries[entries.length - 1] = {
+        ...entries[entries.length - 1],
+        translated: "",
+      };
+
+      const last = entries[entries.length - 1];
+      if (!last.original && !last.translated) {
+        entries.pop();
+      }
+
       return { entries };
     }),
 }));
