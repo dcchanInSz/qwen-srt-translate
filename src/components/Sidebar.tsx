@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useStore } from "@/store/useStore";
 
 export default function Sidebar() {
@@ -13,7 +13,7 @@ export default function Sidebar() {
   const [translating, setTranslating] = useState(false);
   const [progress, setProgress] = useState("");
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
     setLoadingModels(true);
     try {
       const res = await fetch("/api/models");
@@ -23,7 +23,12 @@ export default function Sidebar() {
       setModels([]);
     }
     setLoadingModels(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchModels();
+  }, [fetchModels]);
 
   const doTranslate = async (indices: number[]) => {
     if (!model) {
