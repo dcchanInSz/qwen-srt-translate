@@ -73,8 +73,17 @@ export const useStore = create<AppState>((set, get) => ({
 
       const t = entry.translated;
       const mid = Math.floor(t.length / 2);
-      const firstHalf = t.slice(0, mid).trim();
-      const secondHalf = t.slice(mid).trim();
+
+      let splitPos = mid;
+      for (let d = 0; d < Math.max(mid, t.length - mid); d++) {
+        const right = mid + d;
+        const left = mid - d;
+        if (right < t.length && t[right] === " ") { splitPos = right; break; }
+        if (left >= 0 && t[left] === " ") { splitPos = left; break; }
+      }
+
+      const firstHalf = t.slice(0, splitPos).trim();
+      const secondHalf = t.slice(splitPos + 1).trim();
       if (!firstHalf || !secondHalf) return state;
 
       const entries = [...state.entries];
