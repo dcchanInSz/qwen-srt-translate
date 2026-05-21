@@ -81,7 +81,7 @@ export const useStore = create<AppState>((set, get) => ({
         id: Math.max(...state.entries.map((e) => e.id)) + 1 + Math.random(),
         startTime: entry.startTime,
         endTime: entry.endTime,
-        original: entry.original,
+        original: "",
         translated: secondHalf,
       };
 
