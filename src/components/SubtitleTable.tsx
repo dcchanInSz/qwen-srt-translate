@@ -72,7 +72,7 @@ function EditableCell({
 }
 
 export default function SubtitleTable() {
-  const { entries, selectedIndices, updateEntry, toggleSelected } = useStore();
+  const { entries, selectedIndices, updateEntry, toggleSelected, moveEntry, splitEntry } = useStore();
 
   if (entries.length === 0) {
     return (
@@ -106,6 +106,7 @@ export default function SubtitleTable() {
             <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">End</th>
             <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Original</th>
             <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Translation</th>
+            <th className="w-20 p-2 text-left text-xs font-medium text-gray-500 border-b">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -147,6 +148,33 @@ export default function SubtitleTable() {
                     value={entry.translated}
                     onSave={(v) => updateEntry(entry.id, { translated: v })}
                   />
+                </td>
+                <td className="p-1 whitespace-nowrap">
+                  <div className="flex gap-0.5">
+                    <button
+                      onClick={() => moveEntry(idx, -1)}
+                      disabled={idx === 0}
+                      title="Move up"
+                      className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => moveEntry(idx, 1)}
+                      disabled={idx === entries.length - 1}
+                      title="Move down"
+                      className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
+                    >
+                      ▼
+                    </button>
+                    <button
+                      onClick={() => splitEntry(idx)}
+                      title="Split"
+                      className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
+                    >
+                      ⑊
+                    </button>
+                  </div>
                 </td>
               </tr>
             );

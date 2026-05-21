@@ -20,6 +20,8 @@ interface AppState {
   setSystemPrompt: (prompt: string) => void;
   setTranslateError: (error: string | null) => void;
   translatedCount: () => number;
+  moveEntry: (index: number, direction: -1 | 1) => void;
+  splitEntry: (index: number) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -50,4 +52,79 @@ export const useStore = create<AppState>((set, get) => ({
   setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
   setTranslateError: (translateError) => set({ translateError }),
   translatedCount: () => get().entries.filter((e) => e.translated).length,
+
+  moveEntry: (index, direction) =>
+    set((state) => {
+      const targetIndex = index + direction;
+      if (targetIndex < 0 || targetIndex >= state.entries.length) return state;
+      const entries = [...state.entries];
+      [entries[index], entries[targetIndex]] = [entries[targetIndex], entries[index]];
+      return { entries };
+    }),
+
+  splitEntry: (index) =>
+    set((state) => {
+      const entry = state.entries[index];
+      if (!entry) return state;
+
+      const original = entry.original;
+      const translated = entry.translated;
+      const mid = Math.floor(original.length / 2);
+
+      const midTime = splitTime(entry.startTime, entry.endTime);
+      if (!midTime) return state;
+
+      const first: SubtitleEntry = {
+        ...entry,
+        id: Math.max(...state.entries.map((e) => e.id)) + 1 + Math.random(),
+        endTime: midTime,
+        original: original.slice(0, mid).trim(),
+        translated: translated ? translated.slice(0, Math.floor(translated.length / 2)).trim() : "",
+      };
+      const second: SubtitleEntry = {
+        ...entry,
+        id: Math.max(...state.entries.map((e) => e.id)) + 2 + Math.random(),
+        startTime: midTime,
+        original: original.slice(mid).trim(),
+        translated: translated ? translated.slice(Math.floor(translated.length / 2)).trim() : "",
+      };
+
+      const entries = [...state.entries];
+      entries.splice(index, 1, first, second);
+      return { entries };
+    }),
 }));
+
+function parseTime(ts: string): number {
+  const m = ts.match(/^(\d{2}):(\d{2}):(\d{2})[,.](\d{3})$/);
+  if (!m) return 0;
+  return (
+    parseInt(m[1], 10) * 3600000 +
+    parseInt(m[2], 10) * 60000 +
+    parseInt(m[3], 10) * 1000 +
+    parseInt(m[4], 10)
+  );
+}
+
+function formatTime(ms: number): string {
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  const msRem = ms % 1000;
+  return (
+    String(h).padStart(2, "0") +
+    ":" +
+    String(m).padStart(2, "0") +
+    ":" +
+    String(s).padStart(2, "0") +
+    "," +
+    String(msRem).padStart(3, "0")
+  );
+}
+
+function splitTime(start: string, end: string): string | null {
+  const startMs = parseTime(start);
+  const endMs = parseTime(end);
+  if (startMs >= endMs) return null;
+  return formatTime(Math.floor((startMs + endMs) / 2));
+}
