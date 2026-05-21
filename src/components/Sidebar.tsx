@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useStore } from "@/store/useStore";
 
 export default function Sidebar() {
   const {
-    entries, selectedIndices, model, systemPrompt,
+    entries, selectedIndices, model, systemPrompt, translateError,
     setModel, setSystemPrompt, setTranslateError, updateEntry,
   } = useStore();
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [progress, setProgress] = useState("");
-
-  useEffect(() => {
-    fetchModels();
-  }, []);
 
   const fetchModels = async () => {
     setLoadingModels(true);
@@ -131,8 +127,8 @@ export default function Sidebar() {
       </div>
 
       {progress && <p className="text-xs text-blue-600">{progress}</p>}
-      {useStore((s) => s.translateError) && (
-        <p className="text-xs text-red-500">{useStore((s) => s.translateError)}</p>
+      {translateError && (
+        <p className="text-xs text-red-500">{translateError}</p>
       )}
 
       <div className="text-xs text-gray-400 mt-auto">

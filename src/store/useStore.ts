@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { SubtitleEntry, ExportFormat } from "@/types/subtitle";
+import { SubtitleEntry } from "@/types/subtitle";
 
 interface AppState {
   entries: SubtitleEntry[];
