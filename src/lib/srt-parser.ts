@@ -18,7 +18,10 @@ export function parseSrt(content: string): SubtitleEntry[] {
     const timeMatch = timeLine.match(
       /(\d{2}:\d{2}:\d{2}[,.]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[,.]\d{3})/
     );
-    if (!timeMatch) break;
+    if (!timeMatch) {
+      while (i < lines.length && lines[i].trim() !== "") i++;
+      continue;
+    }
     const [, start, end] = timeMatch;
     i++;
 
@@ -47,8 +50,10 @@ export function serializeSrt(entries: SubtitleEntry[], bilingual: boolean): stri
       const id = idx + 1;
       const time = `${entry.startTime} --> ${entry.endTime}`;
       const text = bilingual
-        ? `${entry.original}\n${entry.translated || entry.original}`
-        : entry.translated || entry.original;
+        ? entry.translated.trim()
+          ? `${entry.original}\n${entry.translated}`
+          : entry.original
+        : entry.translated.trim() || entry.original;
       return `${id}\n${time}\n${text}`;
     })
     .join("\n\n") + "\n";

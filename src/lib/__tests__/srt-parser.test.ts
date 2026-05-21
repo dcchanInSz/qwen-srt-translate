@@ -42,6 +42,26 @@ Hello
     const entries = parseSrt(srt);
     expect(entries[0].startTime).toBe("00:00:01,000");
   });
+
+  it("should skip malformed timestamp and continue parsing", () => {
+    const srt = `1
+00:00:01,000 --> 00:00:03,000
+First subtitle
+
+2
+BAD TIMESTAMP LINE
+This text is orphaned
+
+3
+00:00:06,000 --> 00:00:09,000
+Third subtitle
+
+`;
+    const entries = parseSrt(srt);
+    expect(entries).toHaveLength(2);
+    expect(entries[0].original).toBe("First subtitle");
+    expect(entries[1].original).toBe("Third subtitle");
+  });
 });
 
 describe("serializeSrt", () => {
@@ -60,5 +80,23 @@ describe("serializeSrt", () => {
     ];
     const result = serializeSrt(entries, true);
     expect(result).toContain("Hello\n你好");
+  });
+
+  it("should not duplicate original when translation is empty in bilingual mode", () => {
+    const entries = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "" },
+    ];
+    const result = serializeSrt(entries, true);
+    expect(result).toContain("Hello");
+    expect(result).not.toContain("Hello\nHello");
+  });
+
+  it("should output only original when translation is whitespace in bilingual mode", () => {
+    const entries = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "   " },
+    ];
+    const result = serializeSrt(entries, true);
+    expect(result).toContain("Hello");
+    expect(result).not.toContain("Hello\nHello");
   });
 });
