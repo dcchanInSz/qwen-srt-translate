@@ -106,7 +106,7 @@ export default function SubtitleTable() {
             <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">End</th>
             <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Original</th>
             <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Translation</th>
-            <th className="w-20 p-2 text-left text-xs font-medium text-gray-500 border-b">Actions</th>
+            <th className="w-24 p-2 text-left text-xs font-medium text-gray-500 border-b">Actions</th>
           </tr>
         </thead>
         <tbody>

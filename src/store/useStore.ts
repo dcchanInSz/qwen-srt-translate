@@ -69,32 +69,25 @@ export const useStore = create<AppState>((set, get) => ({
   splitEntry: (index) =>
     set((state) => {
       const entry = state.entries[index];
-      if (!entry) return state;
+      if (!entry || !entry.translated) return state;
 
-      const original = entry.original;
-      const translated = entry.translated;
-      const mid = Math.floor(original.length / 2);
+      const t = entry.translated;
+      const mid = Math.floor(t.length / 2);
+      const firstHalf = t.slice(0, mid).trim();
+      const secondHalf = t.slice(mid).trim();
+      if (!firstHalf || !secondHalf) return state;
 
-      const midTime = splitTime(entry.startTime, entry.endTime);
-      if (!midTime) return state;
-
-      const first: SubtitleEntry = {
-        ...entry,
+      const newEntry: SubtitleEntry = {
         id: Math.max(...state.entries.map((e) => e.id)) + 1 + Math.random(),
-        endTime: midTime,
-        original: original.slice(0, mid).trim(),
-        translated: translated ? translated.slice(0, Math.floor(translated.length / 2)).trim() : "",
-      };
-      const second: SubtitleEntry = {
-        ...entry,
-        id: Math.max(...state.entries.map((e) => e.id)) + 2 + Math.random(),
-        startTime: midTime,
-        original: original.slice(mid).trim(),
-        translated: translated ? translated.slice(Math.floor(translated.length / 2)).trim() : "",
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        original: entry.original,
+        translated: secondHalf,
       };
 
       const entries = [...state.entries];
-      entries.splice(index, 1, first, second);
+      entries[index] = { ...entry, translated: firstHalf, translatedAt: Date.now() };
+      entries.splice(index + 1, 0, newEntry);
       return { entries };
     }),
 
@@ -107,45 +100,10 @@ export const useStore = create<AppState>((set, get) => ({
       entries[index - 1] = {
         ...above,
         endTime: current.endTime,
-        original: above.original + "\n" + current.original,
-        translated: above.translated + "\n" + current.translated,
+        translated: (above.translated || "") + "\n" + (current.translated || ""),
         translatedAt: Date.now(),
       };
       entries.splice(index, 1);
       return { entries };
     }),
 }));
-
-function parseTime(ts: string): number {
-  const m = ts.match(/^(\d{2}):(\d{2}):(\d{2})[,.](\d{3})$/);
-  if (!m) return 0;
-  return (
-    parseInt(m[1], 10) * 3600000 +
-    parseInt(m[2], 10) * 60000 +
-    parseInt(m[3], 10) * 1000 +
-    parseInt(m[4], 10)
-  );
-}
-
-function formatTime(ms: number): string {
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const msRem = ms % 1000;
-  return (
-    String(h).padStart(2, "0") +
-    ":" +
-    String(m).padStart(2, "0") +
-    ":" +
-    String(s).padStart(2, "0") +
-    "," +
-    String(msRem).padStart(3, "0")
-  );
-}
-
-function splitTime(start: string, end: string): string | null {
-  const startMs = parseTime(start);
-  const endMs = parseTime(end);
-  if (startMs >= endMs) return null;
-  return formatTime(Math.floor((startMs + endMs) / 2));
-}
