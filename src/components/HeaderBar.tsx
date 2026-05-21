@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { useStore } from "@/store/useStore";
 import { parseSrt, serializeSrt } from "@/lib/srt-parser";
+import { serializeVtt, serializeAss } from "@/lib/exporters";
 import { ExportFormat } from "@/types/subtitle";
 
 export default function HeaderBar() {
@@ -24,9 +25,21 @@ export default function HeaderBar() {
 
   const handleExport = (format: ExportFormat) => {
     const bilingual = format.includes("bilingual");
-    const srtContent = serializeSrt(entries, bilingual);
-    const ext = format.startsWith("vtt") ? "vtt" : format.startsWith("ass") ? "ass" : "srt";
-    const blob = new Blob([srtContent], { type: "text/plain" });
+    let content: string;
+    let ext: string = "srt";
+
+    if (format.startsWith("vtt")) {
+      content = serializeVtt(entries, bilingual);
+      ext = "vtt";
+    } else if (format.startsWith("ass")) {
+      content = serializeAss(entries, bilingual);
+      ext = "ass";
+    } else {
+      content = serializeSrt(entries, bilingual);
+      ext = "srt";
+    }
+
+    const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
