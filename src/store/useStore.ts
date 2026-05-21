@@ -22,6 +22,7 @@ interface AppState {
   translatedCount: () => number;
   moveEntry: (index: number, direction: -1 | 1) => void;
   splitEntry: (index: number) => void;
+  mergeWithAbove: (index: number) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -58,7 +59,10 @@ export const useStore = create<AppState>((set, get) => ({
       const targetIndex = index + direction;
       if (targetIndex < 0 || targetIndex >= state.entries.length) return state;
       const entries = [...state.entries];
-      [entries[index], entries[targetIndex]] = [entries[targetIndex], entries[index]];
+      const a = entries[index];
+      const b = entries[targetIndex];
+      entries[index] = { ...a, translated: b.translated, translatedAt: Date.now() };
+      entries[targetIndex] = { ...b, translated: a.translated, translatedAt: Date.now() };
       return { entries };
     }),
 
@@ -91,6 +95,23 @@ export const useStore = create<AppState>((set, get) => ({
 
       const entries = [...state.entries];
       entries.splice(index, 1, first, second);
+      return { entries };
+    }),
+
+  mergeWithAbove: (index) =>
+    set((state) => {
+      if (index <= 0 || index >= state.entries.length) return state;
+      const above = state.entries[index - 1];
+      const current = state.entries[index];
+      const entries = [...state.entries];
+      entries[index - 1] = {
+        ...above,
+        endTime: current.endTime,
+        original: above.original + "\n" + current.original,
+        translated: above.translated + "\n" + current.translated,
+        translatedAt: Date.now(),
+      };
+      entries.splice(index, 1);
       return { entries };
     }),
 }));

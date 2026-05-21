@@ -72,7 +72,7 @@ function EditableCell({
 }
 
 export default function SubtitleTable() {
-  const { entries, selectedIndices, updateEntry, toggleSelected, moveEntry, splitEntry } = useStore();
+  const { entries, selectedIndices, updateEntry, toggleSelected, moveEntry, splitEntry, mergeWithAbove } = useStore();
 
   if (entries.length === 0) {
     return (
@@ -154,7 +154,7 @@ export default function SubtitleTable() {
                     <button
                       onClick={() => moveEntry(idx, -1)}
                       disabled={idx === 0}
-                      title="Move up"
+                      title="Swap translation up"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                     >
                       ▲
@@ -162,7 +162,7 @@ export default function SubtitleTable() {
                     <button
                       onClick={() => moveEntry(idx, 1)}
                       disabled={idx === entries.length - 1}
-                      title="Move down"
+                      title="Swap translation down"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                     >
                       ▼
@@ -173,6 +173,14 @@ export default function SubtitleTable() {
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
                     >
                       ⑊
+                    </button>
+                    <button
+                      onClick={() => mergeWithAbove(idx)}
+                      disabled={idx === 0}
+                      title="Merge with above"
+                      className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
+                    >
+                      ↥
                     </button>
                   </div>
                 </td>
