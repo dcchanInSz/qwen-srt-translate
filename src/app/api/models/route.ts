@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
-import { getModels } from "@/lib/ollama";
+import { NextRequest, NextResponse } from "next/server";
+import { getModels, parseProvider } from "@/lib/llm";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const models = await getModels();
-    return NextResponse.json({ models });
+    const provider = parseProvider(request.nextUrl.searchParams.get("provider"));
+    const models = await getModels(provider);
+    return NextResponse.json({ models, provider });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unknown error" },

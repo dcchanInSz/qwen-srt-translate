@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { translate } from "@/lib/ollama";
+import { parseProvider, translate } from "@/lib/llm";
 import { TranslateRequest } from "@/types/subtitle";
 
 export async function POST(request: NextRequest) {
   try {
     const body: TranslateRequest = await request.json();
     const { model, systemPrompt, entries } = body;
+    const provider = parseProvider(body.provider);
 
     if (!model) {
       return NextResponse.json({ error: "Model is required" }, { status: 400 });
     }
 
     const texts = entries.map((e) => e.text);
-    const translated = await translate(model, systemPrompt, texts);
+    const translated = await translate(provider, model, systemPrompt, texts);
 
     const translations = entries.map((entry, i) => ({
       index: entry.index,

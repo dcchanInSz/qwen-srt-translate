@@ -5,6 +5,7 @@ import { useStore } from "@/store/useStore";
 export default function StatusBar() {
   const entries = useStore((s) => s.entries);
   const selectedIndices = useStore((s) => s.selectedIndices);
+  const provider = useStore((s) => s.provider);
   const model = useStore((s) => s.model);
   const translateError = useStore((s) => s.translateError);
 
@@ -18,7 +19,7 @@ export default function StatusBar() {
         <span>Selected: {selectedIndices.length}</span>
       )}
       <span className="ml-auto">
-        Model: {model || "none"}
+        {provider} / {model || "none"}
       </span>
       {translateError && (
         <span className="text-red-500">{translateError}</span>

@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { LLM_PROVIDERS } from "@/lib/llm";
 import { useStore } from "@/store/useStore";
 
 export default function Sidebar() {
   const {
-    entries, selectedIndices, model, systemPrompt, translateError,
-    setModel, setSystemPrompt, setTranslateError, updateEntry,
+    entries, selectedIndices, provider, model, systemPrompt, translateError,
+    setProvider, setModel, setSystemPrompt, setTranslateError, updateEntry,
   } = useStore();
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -16,14 +17,14 @@ export default function Sidebar() {
   const fetchModels = useCallback(async () => {
     setLoadingModels(true);
     try {
-      const res = await fetch("/api/models");
+      const res = await fetch(`/api/models?provider=${provider}`);
       const data = await res.json();
       setModels(data.models?.map((m: { name: string }) => m.name) || []);
     } catch {
       setModels([]);
     }
     setLoadingModels(false);
-  }, []);
+  }, [provider]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -41,6 +42,7 @@ export default function Sidebar() {
 
     try {
       const reqBody = {
+        provider,
         model,
         systemPrompt,
         entries: indices.map((i) => ({
@@ -83,6 +85,19 @@ export default function Sidebar() {
 
   return (
     <aside className="w-56 shrink-0 border-r p-3 flex flex-col gap-3 bg-gray-50 overflow-y-auto">
+      <div>
+        <label className="text-xs font-medium text-gray-500">Provider</label>
+        <select
+          value={provider}
+          onChange={(e) => setProvider(e.target.value as typeof provider)}
+          className="w-full mt-1 p-1.5 border rounded text-sm"
+        >
+          {LLM_PROVIDERS.map((p) => (
+            <option key={p.id} value={p.id}>{p.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div>
         <label className="text-xs font-medium text-gray-500">Model</label>
         <select

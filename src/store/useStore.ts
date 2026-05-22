@@ -1,12 +1,14 @@
 "use client";
 
 import { create } from "zustand";
+import type { LlmProvider } from "@/lib/llm";
 import { SubtitleEntry } from "@/types/subtitle";
 
 interface AppState {
   entries: SubtitleEntry[];
   fileName: string | null;
   selectedIndices: number[];
+  provider: LlmProvider;
   model: string;
   systemPrompt: string;
   translateError: string | null;
@@ -16,6 +18,7 @@ interface AppState {
   updateEntry: (id: number, updates: Partial<SubtitleEntry>) => void;
   setSelectedIndices: (indices: number[]) => void;
   toggleSelected: (index: number) => void;
+  setProvider: (provider: LlmProvider) => void;
   setModel: (model: string) => void;
   setSystemPrompt: (prompt: string) => void;
   setTranslateError: (error: string | null) => void;
@@ -29,6 +32,7 @@ export const useStore = create<AppState>((set, get) => ({
   entries: [],
   fileName: null,
   selectedIndices: [],
+  provider: "ollama",
   model: "",
   systemPrompt: "你是一个专业的字幕翻译器。请将以下字幕翻译为中文，保持自然的语序和表达。",
   translateError: null,
@@ -49,6 +53,7 @@ export const useStore = create<AppState>((set, get) => ({
         : [...state.selectedIndices, index];
       return { selectedIndices: indices };
     }),
+  setProvider: (provider) => set({ provider, model: "" }),
   setModel: (model) => set({ model }),
   setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
   setTranslateError: (translateError) => set({ translateError }),

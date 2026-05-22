@@ -7,7 +7,10 @@ export interface SubtitleEntry {
   translatedAt?: number;
 }
 
+import type { LlmProvider } from "@/lib/llm";
+
 export interface TranslateRequest {
+  provider: LlmProvider;
   model: string;
   systemPrompt: string;
   entries: { index: number; text: string }[];

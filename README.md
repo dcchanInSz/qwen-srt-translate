@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Qwen SRT Translate
 
-## Getting Started
+基于 Next.js 的字幕翻译工具，支持通过本地 **Ollama** 或 **LM Studio** 调用大模型进行翻译。
 
-First, run the development server:
+## 前置条件
+
+任选其一（或两者都装）：
+
+- **Ollama**：默认 `http://localhost:11434`
+- **LM Studio**：在 LM Studio 中加载模型并开启 Local Server（OpenAI 兼容 API），默认 `http://localhost:1234/v1`
+
+## 环境变量（可选）
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `OLLAMA_BASE` | `http://localhost:11434` | Ollama API 地址 |
+| `LM_STUDIO_BASE` | `http://localhost:1234/v1` | LM Studio OpenAI 兼容 API 根路径 |
+
+## 使用 LM Studio
+
+1. 在 LM Studio 中下载并加载模型
+2. 打开 **Local Server**，确认端口（默认 1234）
+3. 启动本应用：`npm run dev`
+4. 在侧边栏 **Provider** 选择 **LM Studio**，点击 **Refresh models** 选择模型后翻译
+
+## 开发
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+浏览器打开 [http://localhost:3000](http://localhost:3000)。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+npm test
+```
