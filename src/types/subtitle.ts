@@ -22,4 +22,4 @@ export interface TranslateResponse {
   translations: { index: number; text: string }[];
 }
 
-export type ExportFormat = "srt" | "srt-bilingual" | "vtt" | "vtt-bilingual" | "ass";
+export type ExportFormat = "srt" | "srt-bilingual" | "vtt" | "vtt-bilingual" | "ass" | "json";

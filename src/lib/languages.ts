@@ -7,7 +7,7 @@ export interface TargetLanguage {
 export const TARGET_LANGUAGES: TargetLanguage[] = [
   { id: "zh", label: "中文（简体）", promptName: "Simplified Chinese" },
   { id: "zh-TW", label: "中文（繁體）", promptName: "Traditional Chinese" },
-  { id: "en", label: "English", promptName: "English" },
+  { id: "en", label: "英语", promptName: "English" },
   { id: "ja", label: "日本語", promptName: "Japanese" },
   { id: "ko", label: "한국어", promptName: "Korean" },
   { id: "es", label: "Español", promptName: "Spanish" },
@@ -15,7 +15,7 @@ export const TARGET_LANGUAGES: TargetLanguage[] = [
   { id: "de", label: "Deutsch", promptName: "German" },
   { id: "pt", label: "Português", promptName: "Portuguese" },
   { id: "ru", label: "Русский", promptName: "Russian" },
-  { id: "custom", label: "Custom", promptName: "" },
+  { id: "custom", label: "自定义", promptName: "" },
 ];
 
 export const DEFAULT_TARGET_LANGUAGE = "zh";

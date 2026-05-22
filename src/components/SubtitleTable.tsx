@@ -66,7 +66,7 @@ function EditableCell({
       onDoubleClick={() => setEditing(true)}
       className={`p-1 text-sm cursor-pointer hover:bg-gray-100 rounded min-h-[24px] ${className}`}
     >
-      {value || <span className="text-gray-300">Double-click to edit</span>}
+      {value || <span className="text-gray-300">双击编辑</span>}
     </div>
   );
 }
@@ -77,7 +77,7 @@ export default function SubtitleTable() {
   if (entries.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400">
-        Load an SRT file to begin
+        加载 SRT 文件开始使用
       </div>
     );
   }
@@ -102,11 +102,11 @@ export default function SubtitleTable() {
               />
             </th>
             <th className="w-10 p-2 text-left text-xs font-medium text-gray-500 border-b">#</th>
-            <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">Start</th>
-            <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">End</th>
-            <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Original</th>
-            <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">Translation</th>
-            <th className="w-24 p-2 text-left text-xs font-medium text-gray-500 border-b">Actions</th>
+            <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">开始</th>
+            <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">结束</th>
+            <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">原文</th>
+            <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">译文</th>
+            <th className="w-24 p-2 text-left text-xs font-medium text-gray-500 border-b">操作</th>
           </tr>
         </thead>
         <tbody>
@@ -154,7 +154,7 @@ export default function SubtitleTable() {
                     <button
                       onClick={() => moveEntry(idx, -1)}
                       disabled={idx === 0}
-                      title="Swap translation up"
+                      title="与上一条交换译文"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                     >
                       ▲
@@ -162,14 +162,14 @@ export default function SubtitleTable() {
                     <button
                       onClick={() => moveEntry(idx, 1)}
                       disabled={idx === entries.length - 1}
-                      title="Swap translation down"
+                      title="与下一条交换译文"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                     >
                       ▼
                     </button>
                     <button
                       onClick={() => splitEntry(idx)}
-                      title="Split"
+                      title="拆分"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
                     >
                       ⑊
@@ -177,7 +177,7 @@ export default function SubtitleTable() {
                     <button
                       onClick={() => mergeWithAbove(idx)}
                       disabled={idx === 0}
-                      title="Merge with above"
+                      title="与上一条合并"
                       className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                     >
                       ↥

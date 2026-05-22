@@ -20,6 +20,6 @@ describe("languages", () => {
   });
 
   it("returns label for known language", () => {
-    expect(getTargetLanguageLabel("en")).toBe("English");
+    expect(getTargetLanguageLabel("en")).toBe("英语");
   });
 });

@@ -36,12 +36,12 @@ export default function Sidebar() {
 
   const doTranslate = async (indices: number[]) => {
     if (!model) {
-      setTranslateError("Please select a model first");
+      setTranslateError("请先选择模型");
       return;
     }
     setTranslating(true);
     setTranslateError(null);
-    setProgress(`Translating ${indices.length} entries...`);
+    setProgress(`正在翻译 ${indices.length} 条…`);
 
     try {
       const reqBody = {
@@ -69,7 +69,7 @@ export default function Sidebar() {
         setProgress("");
       }
     } catch (err) {
-      setTranslateError(err instanceof Error ? err.message : "Translation failed");
+      setTranslateError(err instanceof Error ? err.message : "翻译失败");
     }
     setTranslating(false);
   };
@@ -90,7 +90,7 @@ export default function Sidebar() {
   return (
     <aside className="w-56 shrink-0 border-r p-3 flex flex-col gap-3 bg-gray-50 overflow-y-auto">
       <div>
-        <label className="text-xs font-medium text-gray-500">Provider</label>
+        <label className="text-xs font-medium text-gray-500">提供商</label>
         <select
           value={provider}
           onChange={(e) => setProvider(e.target.value as typeof provider)}
@@ -103,13 +103,13 @@ export default function Sidebar() {
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">Model</label>
+        <label className="text-xs font-medium text-gray-500">模型</label>
         <select
           value={model}
           onChange={(e) => setModel(e.target.value)}
           className="w-full mt-1 p-1.5 border rounded text-sm"
         >
-          <option value="">-- Select model --</option>
+          <option value="">— 选择模型 —</option>
           {models.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
@@ -119,12 +119,12 @@ export default function Sidebar() {
           disabled={loadingModels}
           className="mt-1 text-xs text-blue-500 hover:underline"
         >
-          {loadingModels ? "Loading..." : "Refresh models"}
+          {loadingModels ? "加载中…" : "刷新模型列表"}
         </button>
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">Target Language</label>
+        <label className="text-xs font-medium text-gray-500">目标语言</label>
         <select
           value={targetLanguage}
           onChange={(e) => setTargetLanguage(e.target.value)}
@@ -137,17 +137,17 @@ export default function Sidebar() {
       </div>
 
       <div>
-        <label className="text-xs font-medium text-gray-500">System Prompt</label>
+        <label className="text-xs font-medium text-gray-500">系统提示词</label>
         <textarea
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={4}
           className="w-full mt-1 p-1.5 border rounded text-xs resize-y"
-          placeholder="Edit prompt or choose Custom above"
+          placeholder="编辑提示词，或在上方选择「自定义」"
         />
         {targetLanguage !== "custom" && (
           <p className="mt-1 text-[10px] text-gray-400">
-            Auto-generated from target language. Edit to switch to Custom.
+            根据目标语言自动生成。修改后将切换为「自定义」。
           </p>
         )}
       </div>
@@ -158,14 +158,14 @@ export default function Sidebar() {
           disabled={translating || !model || entries.length === 0}
           className="px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
         >
-          Translate All
+          全部翻译
         </button>
         <button
           onClick={handleTranslateSelected}
           disabled={translating || selectedIndices.length === 0}
           className="px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50"
         >
-          Translate Selected
+          翻译选中
         </button>
       </div>
 
@@ -175,7 +175,7 @@ export default function Sidebar() {
       )}
 
       <div className="text-xs text-gray-400 mt-auto">
-        Total: {entries.length} | Translated: {entries.filter((e) => e.translated).length}
+        共 {entries.length} 条 · 已译 {entries.filter((e) => e.translated).length} 条
       </div>
     </aside>
   );

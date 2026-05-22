@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const provider = parseProvider(body.provider);
 
     if (!model) {
-      return NextResponse.json({ error: "Model is required" }, { status: 400 });
+      return NextResponse.json({ error: "请选择模型" }, { status: 400 });
     }
 
     const texts = entries.map((e) => e.text);
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ translations });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Translation failed" },
+      { error: error instanceof Error ? error.message : "翻译失败" },
       { status: 500 }
     );
   }

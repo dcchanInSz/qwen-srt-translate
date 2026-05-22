@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { useStore } from "@/store/useStore";
 import { parseSrt, serializeSrt } from "@/lib/srt-parser";
-import { serializeVtt, serializeAss } from "@/lib/exporters";
+import { serializeVtt, serializeAss, serializeJson } from "@/lib/exporters";
 import { ExportFormat } from "@/types/subtitle";
 
 export default function HeaderBar() {
@@ -28,7 +28,10 @@ export default function HeaderBar() {
     let content: string;
     let ext: string = "srt";
 
-    if (format.startsWith("vtt")) {
+    if (format === "json") {
+      content = serializeJson(entries);
+      ext = "json";
+    } else if (format.startsWith("vtt")) {
       content = serializeVtt(entries, bilingual);
       ext = "vtt";
     } else if (format.startsWith("ass")) {
@@ -39,7 +42,9 @@ export default function HeaderBar() {
       ext = "srt";
     }
 
-    const blob = new Blob([content], { type: "text/plain" });
+    const mime =
+      format === "json" ? "application/json" : "text/plain";
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -50,7 +55,7 @@ export default function HeaderBar() {
 
   return (
     <header className="flex items-center gap-4 px-4 py-2 border-b bg-gray-50 shrink-0">
-      <h1 className="text-lg font-bold whitespace-nowrap">SRT Translator</h1>
+      <h1 className="text-lg font-bold whitespace-nowrap">SRT 字幕翻译</h1>
 
       <input
         ref={fileInputRef}
@@ -63,7 +68,7 @@ export default function HeaderBar() {
         onClick={() => fileInputRef.current?.click()}
         className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
       >
-        Load SRT
+        加载 SRT
       </button>
 
       {fileName && (
@@ -78,12 +83,13 @@ export default function HeaderBar() {
           defaultValue=""
           className="px-3 py-1 border rounded text-sm"
         >
-          <option value="" disabled>Export...</option>
-          <option value="srt">SRT (Translation only)</option>
-          <option value="srt-bilingual">SRT (Bilingual)</option>
-          <option value="vtt">VTT (Translation only)</option>
-          <option value="vtt-bilingual">VTT (Bilingual)</option>
-          <option value="ass">ASS (Translation only)</option>
+          <option value="" disabled>导出…</option>
+          <option value="srt">SRT（仅译文）</option>
+          <option value="srt-bilingual">SRT（双语）</option>
+          <option value="vtt">VTT（仅译文）</option>
+          <option value="vtt-bilingual">VTT（双语）</option>
+          <option value="ass">ASS（仅译文）</option>
+          <option value="json">JSON（仅译文）</option>
         </select>
       )}
     </header>
