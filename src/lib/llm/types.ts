@@ -14,7 +14,24 @@ export const BATCH_SEPARATOR = "\n---\n";
 export function buildSystemContent(systemPrompt: string): string {
   return `${systemPrompt}
 
-重要规则：我会给你多段文本，每段用 "---" 分隔。请翻译每一段，保持相同的分隔符格式。不要添加任何额外解释。`;
+Rules:
+1. [FULL SUBTITLE SCRIPT] is context only—read it to understand the story; do not translate it.
+2. Translate only the lines in [SEGMENTS TO TRANSLATE].
+3. Segments to translate are separated by "---". Return translations with the same "---" separators, one translation per segment.
+4. Do not add explanations or extra text.`;
+}
+
+export function buildUserContent(fullContext: string[], texts: string[]): string {
+  const script = fullContext
+    .map((line, i) => `${i + 1}. ${line}`)
+    .join("\n");
+  const segments = texts.join(BATCH_SEPARATOR);
+
+  return `[FULL SUBTITLE SCRIPT - for context only, do not translate]
+${script}
+
+[SEGMENTS TO TRANSLATE]
+${segments}`;
 }
 
 export function parseProvider(value: string | null | undefined): LlmProvider {

@@ -1,4 +1,9 @@
-import { BATCH_SEPARATOR, buildSystemContent, LlmModel } from "./types";
+import {
+  BATCH_SEPARATOR,
+  buildSystemContent,
+  buildUserContent,
+  LlmModel,
+} from "./types";
 
 const LM_STUDIO_BASE = process.env.LM_STUDIO_BASE || "http://localhost:1234/v1";
 
@@ -12,9 +17,13 @@ export async function getModels(): Promise<LlmModel[]> {
 export async function translate(
   model: string,
   systemPrompt: string,
-  texts: string[]
+  texts: string[],
+  fullContext?: string[]
 ): Promise<string[]> {
-  const combined = texts.join(BATCH_SEPARATOR);
+  const userContent =
+    fullContext && fullContext.length > 0
+      ? buildUserContent(fullContext, texts)
+      : texts.join(BATCH_SEPARATOR);
 
   const res = await fetch(`${LM_STUDIO_BASE}/chat/completions`, {
     method: "POST",
@@ -23,7 +32,7 @@ export async function translate(
       model,
       messages: [
         { role: "system", content: buildSystemContent(systemPrompt) },
-        { role: "user", content: combined },
+        { role: "user", content: userContent },
       ],
       stream: false,
     }),

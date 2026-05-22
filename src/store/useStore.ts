@@ -1,6 +1,10 @@
 "use client";
 
 import { create } from "zustand";
+import {
+  buildDefaultSystemPrompt,
+  DEFAULT_TARGET_LANGUAGE,
+} from "@/lib/languages";
 import type { LlmProvider } from "@/lib/llm";
 import { SubtitleEntry } from "@/types/subtitle";
 
@@ -10,6 +14,7 @@ interface AppState {
   selectedIndices: number[];
   provider: LlmProvider;
   model: string;
+  targetLanguage: string;
   systemPrompt: string;
   translateError: string | null;
 
@@ -20,6 +25,7 @@ interface AppState {
   toggleSelected: (index: number) => void;
   setProvider: (provider: LlmProvider) => void;
   setModel: (model: string) => void;
+  setTargetLanguage: (languageId: string) => void;
   setSystemPrompt: (prompt: string) => void;
   setTranslateError: (error: string | null) => void;
   translatedCount: () => number;
@@ -34,7 +40,8 @@ export const useStore = create<AppState>((set, get) => ({
   selectedIndices: [],
   provider: "ollama",
   model: "",
-  systemPrompt: "你是一个专业的字幕翻译器。请将以下字幕翻译为中文，保持自然的语序和表达。",
+  targetLanguage: DEFAULT_TARGET_LANGUAGE,
+  systemPrompt: buildDefaultSystemPrompt(DEFAULT_TARGET_LANGUAGE),
   translateError: null,
 
   setEntries: (entries) => set({ entries, selectedIndices: [] }),
@@ -55,7 +62,15 @@ export const useStore = create<AppState>((set, get) => ({
     }),
   setProvider: (provider) => set({ provider, model: "" }),
   setModel: (model) => set({ model }),
-  setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
+  setTargetLanguage: (targetLanguage) =>
+    set({
+      targetLanguage,
+      systemPrompt:
+        targetLanguage === "custom"
+          ? get().systemPrompt
+          : buildDefaultSystemPrompt(targetLanguage),
+    }),
+  setSystemPrompt: (systemPrompt) => set({ systemPrompt, targetLanguage: "custom" }),
   setTranslateError: (translateError) => set({ translateError }),
   translatedCount: () => get().entries.filter((e) => e.translated).length,
 

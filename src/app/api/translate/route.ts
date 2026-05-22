@@ -5,7 +5,7 @@ import { TranslateRequest } from "@/types/subtitle";
 export async function POST(request: NextRequest) {
   try {
     const body: TranslateRequest = await request.json();
-    const { model, systemPrompt, entries } = body;
+    const { model, systemPrompt, context, entries } = body;
     const provider = parseProvider(body.provider);
 
     if (!model) {
@@ -13,7 +13,13 @@ export async function POST(request: NextRequest) {
     }
 
     const texts = entries.map((e) => e.text);
-    const translated = await translate(provider, model, systemPrompt, texts);
+    const translated = await translate(
+      provider,
+      model,
+      systemPrompt,
+      texts,
+      context
+    );
 
     const translations = entries.map((entry, i) => ({
       index: entry.index,

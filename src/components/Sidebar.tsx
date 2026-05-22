@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LLM_PROVIDERS } from "@/lib/llm";
+import { TARGET_LANGUAGES } from "@/lib/languages";
 import { useStore } from "@/store/useStore";
 
 export default function Sidebar() {
   const {
-    entries, selectedIndices, provider, model, systemPrompt, translateError,
-    setProvider, setModel, setSystemPrompt, setTranslateError, updateEntry,
+    entries, selectedIndices, provider, model, targetLanguage, systemPrompt,
+    translateError,
+    setProvider, setModel, setTargetLanguage, setSystemPrompt, setTranslateError,
+    updateEntry,
   } = useStore();
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
@@ -45,6 +48,7 @@ export default function Sidebar() {
         provider,
         model,
         systemPrompt,
+        context: entries.map((e) => e.original),
         entries: indices.map((i) => ({
           index: i,
           text: entries[i].original,
@@ -120,13 +124,32 @@ export default function Sidebar() {
       </div>
 
       <div>
+        <label className="text-xs font-medium text-gray-500">Target Language</label>
+        <select
+          value={targetLanguage}
+          onChange={(e) => setTargetLanguage(e.target.value)}
+          className="w-full mt-1 p-1.5 border rounded text-sm"
+        >
+          {TARGET_LANGUAGES.map((lang) => (
+            <option key={lang.id} value={lang.id}>{lang.label}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
         <label className="text-xs font-medium text-gray-500">System Prompt</label>
         <textarea
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={4}
           className="w-full mt-1 p-1.5 border rounded text-xs resize-y"
+          placeholder="Edit prompt or choose Custom above"
         />
+        {targetLanguage !== "custom" && (
+          <p className="mt-1 text-[10px] text-gray-400">
+            Auto-generated from target language. Edit to switch to Custom.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-1.5">

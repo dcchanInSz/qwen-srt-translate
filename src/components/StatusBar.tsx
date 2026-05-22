@@ -1,5 +1,6 @@
 "use client";
 
+import { getTargetLanguageLabel } from "@/lib/languages";
 import { useStore } from "@/store/useStore";
 
 export default function StatusBar() {
@@ -7,6 +8,7 @@ export default function StatusBar() {
   const selectedIndices = useStore((s) => s.selectedIndices);
   const provider = useStore((s) => s.provider);
   const model = useStore((s) => s.model);
+  const targetLanguage = useStore((s) => s.targetLanguage);
   const translateError = useStore((s) => s.translateError);
 
   const translatedCount = entries.filter((e) => e.translated).length;
@@ -19,7 +21,7 @@ export default function StatusBar() {
         <span>Selected: {selectedIndices.length}</span>
       )}
       <span className="ml-auto">
-        {provider} / {model || "none"}
+        {getTargetLanguageLabel(targetLanguage)} · {provider} / {model || "none"}
       </span>
       {translateError && (
         <span className="text-red-500">{translateError}</span>

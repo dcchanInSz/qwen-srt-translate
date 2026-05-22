@@ -1,4 +1,9 @@
-import { BATCH_SEPARATOR, buildSystemContent, LlmModel } from "./types";
+import {
+  BATCH_SEPARATOR,
+  buildSystemContent,
+  buildUserContent,
+  LlmModel,
+} from "./types";
 
 const OLLAMA_BASE = process.env.OLLAMA_BASE || "http://localhost:11434";
 
@@ -12,9 +17,13 @@ export async function getModels(): Promise<LlmModel[]> {
 export async function translate(
   model: string,
   systemPrompt: string,
-  texts: string[]
+  texts: string[],
+  fullContext?: string[]
 ): Promise<string[]> {
-  const combined = texts.join(BATCH_SEPARATOR);
+  const userContent =
+    fullContext && fullContext.length > 0
+      ? buildUserContent(fullContext, texts)
+      : texts.join(BATCH_SEPARATOR);
 
   const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
     method: "POST",
@@ -23,7 +32,7 @@ export async function translate(
       model,
       messages: [
         { role: "system", content: buildSystemContent(systemPrompt) },
-        { role: "user", content: combined },
+        { role: "user", content: userContent },
       ],
       stream: false,
     }),

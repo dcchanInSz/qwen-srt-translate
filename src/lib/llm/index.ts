@@ -5,6 +5,7 @@ import { LlmModel, LlmProvider, parseProvider } from "./types";
 export {
   BATCH_SEPARATOR,
   buildSystemContent,
+  buildUserContent,
   LLM_PROVIDERS,
   parseProvider,
   type LlmModel,
@@ -24,12 +25,13 @@ export async function translate(
   provider: LlmProvider,
   model: string,
   systemPrompt: string,
-  texts: string[]
+  texts: string[],
+  fullContext?: string[]
 ): Promise<string[]> {
   switch (provider) {
     case "lmstudio":
-      return lmstudio.translate(model, systemPrompt, texts);
+      return lmstudio.translate(model, systemPrompt, texts, fullContext);
     case "ollama":
-      return ollama.translate(model, systemPrompt, texts);
+      return ollama.translate(model, systemPrompt, texts, fullContext);
   }
 }

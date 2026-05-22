@@ -13,6 +13,8 @@ export interface TranslateRequest {
   provider: LlmProvider;
   model: string;
   systemPrompt: string;
+  /** Full original script for plot/context understanding */
+  context: string[];
   entries: { index: number; text: string }[];
 }
 
