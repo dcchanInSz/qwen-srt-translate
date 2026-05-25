@@ -24,7 +24,7 @@ export function getTargetLanguage(id: string): TargetLanguage | undefined {
   return TARGET_LANGUAGES.find((l) => l.id === id);
 }
 
-const CONTEXT_AWARE_PROMPT = `Before translating, read the full subtitle script in the user message to understand the overall plot, characters, relationships, tone, and recurring terms. Use that context for consistent names and wording. Translate only the lines in [SEGMENTS TO TRANSLATE]. Preserve natural tone and timing-friendly brevity. 直译即可，不要想太多。Do NOT think step by step. Do NOT output any reasoning or analysis. Return only the translations.`;
+const CONTEXT_AWARE_PROMPT = `Before translating, read the full subtitle script in the user message to understand the overall plot, characters, relationships, tone, and recurring terms. Use that context for consistent names and wording. Translate only the lines in [SEGMENTS TO TRANSLATE]. Preserve natural tone and timing-friendly brevity. Do NOT think step by step. Do NOT output any reasoning or analysis. Return only the translations.`;
 
 export function buildDefaultSystemPrompt(languageId: string): string {
   const lang = getTargetLanguage(languageId);
