@@ -47,8 +47,18 @@ export async function POST(request: NextRequest) {
       text: translated[i] ?? "",
     }));
 
+    const response: Record<string, unknown> = { translations };
+    if (translated.length !== texts.length) {
+      response._debug = {
+        expectedCount: texts.length,
+        actualCount: translated.length,
+        lmStudioRawResponse: (translated as any).__lmstudioResponse || null,
+        lmStudioContentPreview: (translated as any).__lmstudioPreview ?? "",
+      };
+    }
+
     console.log("[translate] success", { totalMs: Date.now() - startedAt });
-    return NextResponse.json({ translations });
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[translate] failed", {
       totalMs: Date.now() - startedAt,

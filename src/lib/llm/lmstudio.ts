@@ -64,7 +64,6 @@ export async function translate(
   const rawParts = content.split(BATCH_SEPARATOR);
   let parts = rawParts.map((s: string) => s.trim());
 
-  // Strip leading/trailing empty parts (likely from extra newlines around separators)
   while (parts.length > 0 && parts[0] === "") parts.shift();
   while (parts.length > 0 && parts[parts.length - 1] === "") parts.pop();
 
@@ -87,6 +86,10 @@ export async function translate(
     console.warn("[translate:lmstudio] all raw parts:", JSON.stringify(rawParts));
     console.warn("[translate:lmstudio] trimmed parts:", JSON.stringify(parts));
   }
+
+  // Attach raw LM Studio debug info for the API route to pass to the client
+  (parts as any).__lmstudioPreview = content.slice(0, 500);
+  (parts as any).__lmstudioResponse = JSON.stringify(data).slice(0, 1000);
 
   return parts;
 }
