@@ -64,7 +64,11 @@ export default function Sidebar() {
         setTranslateError(data.error);
       } else {
         data.translations.forEach((t: { index: number; text: string }) => {
-          updateEntry(entries[t.index].id, { translated: t.text });
+          const currentEntries = useStore.getState().entries;
+          const entry = currentEntries[t.index];
+          if (entry) {
+            updateEntry(entry.id, { translated: t.text });
+          }
         });
         setProgress("");
       }

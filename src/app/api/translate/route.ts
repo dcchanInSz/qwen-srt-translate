@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const translations = entries.map((entry, i) => ({
       index: entry.index,
-      text: translated[i] || entry.text,
+      text: translated[i] ?? "",
     }));
 
     console.log("[translate] success", { totalMs: Date.now() - startedAt });

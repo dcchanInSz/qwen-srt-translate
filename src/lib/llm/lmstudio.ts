@@ -61,13 +61,25 @@ export async function translate(
 
   const data = await res.json();
   const content: string = data.choices?.[0]?.message?.content || "";
-  const parts = content.split(BATCH_SEPARATOR).map((s: string) => s.trim());
+  const parts = content
+    .split(BATCH_SEPARATOR)
+    .map((s: string) => s.trim())
+    .filter(Boolean);
   console.log("[translate:lmstudio] fetch done", {
     fetchMs,
     status: res.status,
     outputChars: content.length,
     partCount: parts.length,
+    expectedCount: texts.length,
   });
+
+  if (parts.length !== texts.length) {
+    console.warn("[translate:lmstudio] part count mismatch", {
+      expected: texts.length,
+      actual: parts.length,
+      contentPreview: content.slice(0, 300),
+    });
+  }
 
   return parts;
 }
