@@ -10,11 +10,13 @@ function EditableCell({
   onSave,
   className = "",
   validate,
+  initialDraft,
 }: {
   value: string;
   onSave: (v: string) => void;
   className?: string;
   validate?: (v: string) => boolean;
+  initialDraft?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -44,6 +46,11 @@ function EditableCell({
     [handleSave, handleCancel]
   );
 
+  const startEditing = useCallback(() => {
+    setDraft(initialDraft ?? value);
+    setEditing(true);
+  }, [initialDraft, value]);
+
   if (editing) {
     return (
       <input
@@ -63,7 +70,7 @@ function EditableCell({
 
   return (
     <div
-      onDoubleClick={() => setEditing(true)}
+      onDoubleClick={startEditing}
       className={`p-1 text-sm cursor-pointer hover:bg-gray-100 rounded min-h-[24px] ${className}`}
     >
       {value || <span className="text-gray-300">双击编辑</span>}
@@ -147,6 +154,7 @@ export default function SubtitleTable() {
                   <EditableCell
                     value={entry.translated}
                     onSave={(v) => updateEntry(entry.id, { translated: v })}
+                    initialDraft={entry.original}
                   />
                 </td>
                 <td className="p-1 whitespace-nowrap">
