@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { parseSrt, serializeSrt } from "@/lib/srt-parser";
 import { serializeVtt, serializeAss, serializeJson } from "@/lib/exporters";
@@ -9,6 +9,7 @@ import { ExportFormat } from "@/types/subtitle";
 export default function HeaderBar() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setEntries, setFileName, entries, fileName } = useStore();
+  const [exportFormat, setExportFormat] = useState<ExportFormat | "">("");
 
   const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -23,18 +24,19 @@ export default function HeaderBar() {
     reader.readAsText(file);
   };
 
-  const handleExport = (format: ExportFormat) => {
-    const bilingual = format.includes("bilingual");
+  const handleExport = () => {
+    if (!exportFormat) return;
+    const bilingual = exportFormat.includes("bilingual");
     let content: string;
     let ext: string = "srt";
 
-    if (format === "json") {
+    if (exportFormat === "json") {
       content = serializeJson(entries);
       ext = "json";
-    } else if (format.startsWith("vtt")) {
+    } else if (exportFormat.startsWith("vtt")) {
       content = serializeVtt(entries, bilingual);
       ext = "vtt";
-    } else if (format.startsWith("ass")) {
+    } else if (exportFormat.startsWith("ass")) {
       content = serializeAss(entries, bilingual);
       ext = "ass";
     } else {
@@ -42,8 +44,7 @@ export default function HeaderBar() {
       ext = "srt";
     }
 
-    const mime =
-      format === "json" ? "application/json" : "text/plain";
+    const mime = exportFormat === "json" ? "application/json" : "text/plain";
     const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -78,19 +79,28 @@ export default function HeaderBar() {
       <div className="flex-1" />
 
       {entries.length > 0 && (
-        <select
-          onChange={(e) => handleExport(e.target.value as ExportFormat)}
-          defaultValue=""
-          className="px-3 py-1 border rounded text-sm"
-        >
-          <option value="" disabled>导出…</option>
-          <option value="srt">SRT（仅译文）</option>
-          <option value="srt-bilingual">SRT（双语）</option>
-          <option value="vtt">VTT（仅译文）</option>
-          <option value="vtt-bilingual">VTT（双语）</option>
-          <option value="ass">ASS（仅译文）</option>
-          <option value="json">JSON（仅译文）</option>
-        </select>
+        <>
+          <select
+            value={exportFormat}
+            onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+            className="px-3 py-1 border rounded text-sm"
+          >
+            <option value="">导出格式…</option>
+            <option value="srt">SRT（仅译文）</option>
+            <option value="srt-bilingual">SRT（双语）</option>
+            <option value="vtt">VTT（仅译文）</option>
+            <option value="vtt-bilingual">VTT（双语）</option>
+            <option value="ass">ASS（仅译文）</option>
+            <option value="json">JSON（仅译文）</option>
+          </select>
+          <button
+            onClick={handleExport}
+            disabled={!exportFormat}
+            className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
+          >
+            导出
+          </button>
+        </>
       )}
     </header>
   );
