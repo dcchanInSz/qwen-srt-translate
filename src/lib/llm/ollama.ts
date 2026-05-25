@@ -25,6 +25,16 @@ export async function translate(
       ? buildUserContent(fullContext, texts)
       : texts.join(BATCH_SEPARATOR);
 
+  const startedAt = Date.now();
+  console.log("[translate:ollama] fetch start", {
+    base: OLLAMA_BASE,
+    model,
+    segmentCount: texts.length,
+    userContentChars: userContent.length,
+    hasFullContext: Boolean(fullContext?.length),
+    contextLines: fullContext?.length ?? 0,
+  });
+
   const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -38,13 +48,26 @@ export async function translate(
     }),
   });
 
+  const fetchMs = Date.now() - startedAt;
   if (!res.ok) {
     const errText = await res.text();
+    console.error("[translate:ollama] fetch error", {
+      fetchMs,
+      status: res.status,
+      errPreview: errText.slice(0, 200),
+    });
     throw new Error(`Ollama translate error: ${res.status} ${errText}`);
   }
 
   const data = await res.json();
   const content: string = data.message?.content || "";
+  const parts = content.split(BATCH_SEPARATOR).map((s: string) => s.trim());
+  console.log("[translate:ollama] fetch done", {
+    fetchMs,
+    status: res.status,
+    outputChars: content.length,
+    partCount: parts.length,
+  });
 
-  return content.split(BATCH_SEPARATOR).map((s: string) => s.trim());
+  return parts;
 }
