@@ -18,7 +18,8 @@ Rules:
 1. [FULL SUBTITLE SCRIPT] is context only—read it to understand the story; do not translate it.
 2. Translate only the lines in [SEGMENTS TO TRANSLATE].
 3. Segments to translate are separated by "---". Return translations with the same "---" separators, one translation per segment.
-4. Do not add explanations or extra text.`;
+4. Do not add explanations or extra text.
+5. Do NOT think step by step. Return only the translation results directly, without any reasoning, analysis, or thinking process.`;
 }
 
 export function buildUserContent(fullContext: string[], texts: string[]): string {
@@ -30,7 +31,7 @@ export function buildUserContent(fullContext: string[], texts: string[]): string
   return `[FULL SUBTITLE SCRIPT - for context only, do not translate]
 ${script}
 
-[SEGMENTS TO TRANSLATE]
+[SEGMENTS TO TRANSLATE - translate only these lines, return translations separated by "---", no thinking, no explanations]
 ${segments}`;
 }
 

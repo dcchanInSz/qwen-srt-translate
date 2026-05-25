@@ -18,7 +18,7 @@ describe("context-aware prompts", () => {
     const user = buildUserContent(["Hello", "World"], ["Hi", "There"]);
     expect(user).toContain("[FULL SUBTITLE SCRIPT");
     expect(user).toContain("1. Hello");
-    expect(user).toContain("[SEGMENTS TO TRANSLATE]");
+    expect(user).toContain("[SEGMENTS TO TRANSLATE");
     expect(user).toContain("Hi\n---\nThere");
   });
 });
