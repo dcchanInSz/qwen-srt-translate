@@ -38,7 +38,7 @@ export const useStore = create<AppState>((set, get) => ({
   entries: [],
   fileName: null,
   selectedIndices: [],
-  provider: "ollama",
+  provider: "lmstudio",
   model: "",
   targetLanguage: DEFAULT_TARGET_LANGUAGE,
   systemPrompt: buildDefaultSystemPrompt(DEFAULT_TARGET_LANGUAGE),

@@ -22,7 +22,12 @@ export default function Sidebar() {
     try {
       const res = await fetch(`/api/models?provider=${provider}`);
       const data = await res.json();
-      setModels(data.models?.map((m: { name: string }) => m.name) || []);
+      const modelList = data.models?.map((m: { name: string }) => m.name) || [];
+      setModels(modelList);
+      const state = useStore.getState();
+      if (modelList.length > 0 && !state.model) {
+        state.setModel(modelList[0]);
+      }
     } catch {
       setModels([]);
     }
