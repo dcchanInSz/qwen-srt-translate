@@ -16,6 +16,7 @@ export interface TranslateRequest {
   /** Full original script for plot/context understanding */
   context: string[];
   entries: { index: number; text: string }[];
+  targetLanguage?: string;
 }
 
 export interface TranslateResponse {

@@ -40,7 +40,7 @@ export default function Sidebar() {
   }, [fetchModels]);
 
   const doTranslate = async (indices: number[]) => {
-    if (!model) {
+    if (provider !== "google" && !model) {
       setTranslateError("请先选择模型");
       return;
     }
@@ -49,10 +49,11 @@ export default function Sidebar() {
     setProgress(`正在翻译 ${indices.length} 条…`);
 
     try {
-      const reqBody = {
+      const reqBody: Record<string, unknown> = {
         provider,
         model,
         systemPrompt,
+        targetLanguage,
         context: entries.map((e) => e.original),
         entries: indices.map((i) => ({
           index: i,
@@ -119,26 +120,28 @@ export default function Sidebar() {
         </select>
       </div>
 
-      <div>
-        <label className="text-xs font-medium text-gray-500">模型</label>
-        <select
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-          className="w-full mt-1 p-1.5 border rounded text-sm"
-        >
-          <option value="">— 选择模型 —</option>
-          {models.map((m) => (
-            <option key={m} value={m}>{m}</option>
-          ))}
-        </select>
-        <button
-          onClick={fetchModels}
-          disabled={loadingModels}
-          className="mt-1 text-xs text-blue-500 hover:underline"
-        >
-          {loadingModels ? "加载中…" : "刷新模型列表"}
-        </button>
-      </div>
+      {provider !== "google" && (
+        <div>
+          <label className="text-xs font-medium text-gray-500">模型</label>
+          <select
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            className="w-full mt-1 p-1.5 border rounded text-sm"
+          >
+            <option value="">— 选择模型 —</option>
+            {models.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+          <button
+            onClick={fetchModels}
+            disabled={loadingModels}
+            className="mt-1 text-xs text-blue-500 hover:underline"
+          >
+            {loadingModels ? "加载中…" : "刷新模型列表"}
+          </button>
+        </div>
+      )}
 
       <div>
         <label className="text-xs font-medium text-gray-500">目标语言</label>
@@ -153,26 +156,28 @@ export default function Sidebar() {
         </select>
       </div>
 
-      <div>
-        <label className="text-xs font-medium text-gray-500">系统提示词</label>
-        <textarea
-          value={systemPrompt}
-          onChange={(e) => setSystemPrompt(e.target.value)}
-          rows={4}
-          className="w-full mt-1 p-1.5 border rounded text-xs resize-y"
-          placeholder="编辑提示词，或在上方选择「自定义」"
-        />
-        {targetLanguage !== "custom" && (
-          <p className="mt-1 text-[10px] text-gray-400">
-            根据目标语言自动生成。修改后将切换为「自定义」。
-          </p>
-        )}
-      </div>
+      {provider !== "google" && (
+        <div>
+          <label className="text-xs font-medium text-gray-500">系统提示词</label>
+          <textarea
+            value={systemPrompt}
+            onChange={(e) => setSystemPrompt(e.target.value)}
+            rows={4}
+            className="w-full mt-1 p-1.5 border rounded text-xs resize-y"
+            placeholder="编辑提示词，或在上方选择「自定义」"
+          />
+          {targetLanguage !== "custom" && (
+            <p className="mt-1 text-[10px] text-gray-400">
+              根据目标语言自动生成。修改后将切换为「自定义」。
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <button
           onClick={handleTranslateAll}
-          disabled={translating || !model || entries.length === 0}
+          disabled={translating || (provider !== "google" && !model) || entries.length === 0}
           className="px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
         >
           全部翻译

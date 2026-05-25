@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   try {
     const body: TranslateRequest = await request.json();
-    const { model, systemPrompt, context, entries } = body;
+    const { model, systemPrompt, context, entries, targetLanguage } = body;
     const provider = parseProvider(body.provider);
 
     console.log("[translate] request received", {
@@ -15,9 +15,10 @@ export async function POST(request: NextRequest) {
       entryCount: entries?.length ?? 0,
       contextLines: context?.length ?? 0,
       systemPromptChars: systemPrompt?.length ?? 0,
+      targetLanguage,
     });
 
-    if (!model) {
+    if (provider !== "google" && !model) {
       return NextResponse.json({ error: "请选择模型" }, { status: 400 });
     }
 
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     console.log("[translate] calling LLM", {
       segmentCount: texts.length,
       segmentTextChars: textChars,
+      targetLanguage,
     });
 
     const llmStartedAt = Date.now();
@@ -34,7 +36,8 @@ export async function POST(request: NextRequest) {
       model,
       systemPrompt,
       texts,
-      context
+      context,
+      targetLanguage
     );
     console.log("[translate] LLM finished", {
       llmMs: Date.now() - llmStartedAt,
