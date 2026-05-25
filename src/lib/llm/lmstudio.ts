@@ -61,24 +61,31 @@ export async function translate(
 
   const data = await res.json();
   const content: string = data.choices?.[0]?.message?.content || "";
-  const parts = content
-    .split(BATCH_SEPARATOR)
-    .map((s: string) => s.trim())
-    .filter(Boolean);
+  const rawParts = content.split(BATCH_SEPARATOR);
+  let parts = rawParts.map((s: string) => s.trim());
+
+  // Strip leading/trailing empty parts (likely from extra newlines around separators)
+  while (parts.length > 0 && parts[0] === "") parts.shift();
+  while (parts.length > 0 && parts[parts.length - 1] === "") parts.pop();
+
   console.log("[translate:lmstudio] fetch done", {
     fetchMs,
     status: res.status,
     outputChars: content.length,
-    partCount: parts.length,
     expectedCount: texts.length,
+    rawPartCount: rawParts.length,
+    partCount: parts.length,
   });
-
+  console.log("[translate:lmstudio] raw content (first 800 chars):", content.slice(0, 800));
   if (parts.length !== texts.length) {
     console.warn("[translate:lmstudio] part count mismatch", {
       expected: texts.length,
       actual: parts.length,
-      contentPreview: content.slice(0, 300),
+      rawActual: rawParts.length,
+      contentPreview: content.slice(0, 800),
     });
+    console.warn("[translate:lmstudio] all raw parts:", JSON.stringify(rawParts));
+    console.warn("[translate:lmstudio] trimmed parts:", JSON.stringify(parts));
   }
 
   return parts;

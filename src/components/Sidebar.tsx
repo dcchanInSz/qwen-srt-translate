@@ -65,10 +65,18 @@ export default function Sidebar() {
         body: JSON.stringify(reqBody),
       });
       const data = await res.json();
+      console.log("[Sidebar] translate response:", data);
       if (data.error) {
         setTranslateError(data.error);
       } else {
-        data.translations.forEach((t: { index: number; text: string }) => {
+        const translations = data.translations as { index: number; text: string }[];
+        const emptyCount = translations.filter(t => !t.text).length;
+        console.log("[Sidebar] translations received:", {
+          count: translations.length,
+          emptyCount,
+          samples: translations.filter(t => t.text).slice(0, 3).map(t => ({ index: t.index, text: t.text.slice(0, 50) })),
+        });
+        translations.forEach((t) => {
           const currentEntries = useStore.getState().entries;
           const entry = currentEntries[t.index];
           if (entry) {
