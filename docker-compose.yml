@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - OLLAMA_BASE=http://host.docker.internal:11434
+      - LM_STUDIO_BASE=http://host.docker.internal:1234/v1
