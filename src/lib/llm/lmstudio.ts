@@ -45,6 +45,7 @@ export async function translate(
         { role: "user", content: userContent },
       ],
       stream: false,
+      max_tokens: 16384,
     }),
   });
 
@@ -60,8 +61,28 @@ export async function translate(
   }
 
   const data = await res.json();
-  const content: string = data.choices?.[0]?.message?.content || "";
-  const rawParts = content.split(BATCH_SEPARATOR);
+  const message = data.choices?.[0]?.message || {};
+  let rawText = (message.content || "").trim();
+  const reasoning = (message.reasoning_content || "").trim();
+
+  // Qwen reasoning models put the answer in reasoning_content when content is empty
+  if (!rawText && reasoning) {
+    console.log("[translate:lmstudio] content empty, using reasoning_content as fallback", {
+      reasoningChars: reasoning.length,
+    });
+    rawText = reasoning;
+  }
+
+  console.log("[translate:lmstudio] full message", {
+    hasContent: Boolean(message.content),
+    contentChars: (message.content || "").length,
+    hasReasoning: Boolean(reasoning),
+    reasoningChars: reasoning.length,
+    usingReasoning: !rawText && reasoning,
+    rawTextPreview: rawText.slice(0, 200),
+  });
+
+  const rawParts = rawText.split(BATCH_SEPARATOR);
   let parts = rawParts.map((s: string) => s.trim());
 
   while (parts.length > 0 && parts[0] === "") parts.shift();
@@ -70,25 +91,24 @@ export async function translate(
   console.log("[translate:lmstudio] fetch done", {
     fetchMs,
     status: res.status,
-    outputChars: content.length,
+    outputChars: rawText.length,
     expectedCount: texts.length,
     rawPartCount: rawParts.length,
     partCount: parts.length,
   });
-  console.log("[translate:lmstudio] raw content (first 800 chars):", content.slice(0, 800));
   if (parts.length !== texts.length) {
     console.warn("[translate:lmstudio] part count mismatch", {
       expected: texts.length,
       actual: parts.length,
       rawActual: rawParts.length,
-      contentPreview: content.slice(0, 800),
+      rawTextPreview: rawText.slice(0, 800),
     });
     console.warn("[translate:lmstudio] all raw parts:", JSON.stringify(rawParts));
     console.warn("[translate:lmstudio] trimmed parts:", JSON.stringify(parts));
   }
 
   // Attach raw LM Studio debug info for the API route to pass to the client
-  (parts as any).__lmstudioPreview = content.slice(0, 500);
+  (parts as any).__lmstudioPreview = rawText.slice(0, 500);
   (parts as any).__lmstudioResponse = JSON.stringify(data).slice(0, 1000);
 
   return parts;
