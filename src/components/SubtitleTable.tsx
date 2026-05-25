@@ -10,13 +10,11 @@ function EditableCell({
   onSave,
   className = "",
   validate,
-  initialDraft,
 }: {
   value: string;
   onSave: (v: string) => void;
   className?: string;
   validate?: (v: string) => boolean;
-  initialDraft?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -47,9 +45,9 @@ function EditableCell({
   );
 
   const startEditing = useCallback(() => {
-    setDraft(initialDraft ?? value);
+    setDraft(value);
     setEditing(true);
-  }, [initialDraft, value]);
+  }, [value]);
 
   if (editing) {
     return (
@@ -154,7 +152,6 @@ export default function SubtitleTable() {
                   <EditableCell
                     value={entry.translated}
                     onSave={(v) => updateEntry(entry.id, { translated: v })}
-                    initialDraft={entry.original}
                   />
                 </td>
                 <td className="p-1 whitespace-nowrap">
