@@ -2,21 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LLM_PROVIDERS } from "@/lib/llm";
-import { TARGET_LANGUAGES } from "@/lib/languages";
 import { useStore } from "@/store/useStore";
+import { TARGET_LANGUAGES } from "@/lib/languages";
 
 export default function Sidebar() {
   const {
-    entries, selectedIndices, provider, model, targetLanguage, systemPrompt,
+    entries, selectedIndices, provider, model, systemPrompt,
     translateError,
-    setProvider, setModel, setTargetLanguage, setSystemPrompt, setTranslateError,
-    updateEntry,
+    setProvider, setModel, setSystemPrompt, setTranslateError,
+    updateTranslation,
   } = useStore();
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
-  const [translating, setTranslating] = useState(false);
+  const [translating, setTranslating] = useState<Record<string, boolean>>({});
   const [progress, setProgress] = useState("");
-  const [googleTranslating, setGoogleTranslating] = useState(false);
+  const [googleTranslating, setGoogleTranslating] = useState<Record<string, boolean>>({});
   const [googleProgress, setGoogleProgress] = useState("");
 
   const fetchModels = useCallback(async () => {
@@ -41,21 +41,28 @@ export default function Sidebar() {
     fetchModels();
   }, [fetchModels]);
 
-  const doTranslate = async (indices: number[]) => {
-    if (provider !== "google" && !model) {
+  const doTranslate = async (indices: number[], isGoogle: boolean) => {
+    if (!isGoogle && !model) {
       setTranslateError("请先选择模型");
       return;
     }
-    setTranslating(true);
+    const allLangs = TARGET_LANGUAGES.map((l) => l.id);
+
+    const setter = isGoogle ? setGoogleTranslating : setTranslating;
+    const progressSetter = isGoogle ? setGoogleProgress : setProgress;
+
+    const initial: Record<string, boolean> = {};
+    allLangs.forEach((l) => (initial[l] = true));
+    setter(initial);
     setTranslateError(null);
-    setProgress(`正在翻译 ${indices.length} 条…`);
+    progressSetter(`正在翻译 ${indices.length} 条 × ${allLangs.length} 语言…`);
 
     try {
       const reqBody: Record<string, unknown> = {
-        provider,
-        model,
+        provider: isGoogle ? "google" : provider,
+        model: isGoogle ? "" : model,
         systemPrompt,
-        targetLanguage,
+        targetLanguages: allLangs,
         context: entries.map((e) => e.original),
         entries: indices.map((i) => ({
           index: i,
@@ -68,86 +75,59 @@ export default function Sidebar() {
         body: JSON.stringify(reqBody),
       });
       const data = await res.json();
-      console.log("[Sidebar] translate response:", data);
-      if (data.error) {
+
+      if (data.error && !data.results) {
         setTranslateError(data.error);
-      } else {
-        const translations = data.translations as { index: number; text: string }[];
-        const emptyCount = translations.filter(t => !t.text).length;
-        console.log("[Sidebar] translations received:", {
-          count: translations.length,
-          emptyCount,
-          samples: translations.filter(t => t.text).slice(0, 3).map(t => ({ index: t.index, text: t.text.slice(0, 50) })),
-        });
+        setter({});
+        return;
+      }
+
+      const results = data.results as Record<string, { index: number; text: string }[]>;
+      for (const [lang, translations] of Object.entries(results)) {
         translations.forEach((t) => {
           const currentEntries = useStore.getState().entries;
           const entry = currentEntries[t.index];
           if (entry) {
-            updateEntry(entry.id, { translated: t.text });
+            updateTranslation(entry.id, lang, t.text);
           }
         });
-        setProgress("");
       }
+
+      if (data.errors) {
+        const errLangs = Object.keys(data.errors);
+        setTranslateError(`部分语言翻译失败: ${errLangs.join(", ")}`);
+      }
+
+      progressSetter("");
     } catch (err) {
       setTranslateError(err instanceof Error ? err.message : "翻译失败");
     }
-    setTranslating(false);
-  };
-
-  const doGoogleTranslate = async (indices: number[]) => {
-    setGoogleTranslating(true);
-    setTranslateError(null);
-    setGoogleProgress(`Google 正在翻译 ${indices.length} 条…`);
-
-    try {
-      const reqBody: Record<string, unknown> = {
-        provider: "google",
-        model: "",
-        systemPrompt: "",
-        targetLanguage,
-        context: entries.map((e) => e.original),
-        entries: indices.map((i) => ({
-          index: i,
-          text: entries[i].original,
-        })),
-      };
-      const res = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reqBody),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setTranslateError(data.error);
-      } else {
-        const translations = data.translations as { index: number; text: string }[];
-        translations.forEach((t) => {
-          const currentEntries = useStore.getState().entries;
-          const entry = currentEntries[t.index];
-          if (entry) {
-            updateEntry(entry.id, { translated: t.text });
-          }
-        });
-        setGoogleProgress("");
-      }
-    } catch (err) {
-      setTranslateError(err instanceof Error ? err.message : "翻译失败");
-    }
-    setGoogleTranslating(false);
+    setter({});
   };
 
   const handleTranslateAll = () => {
-    const untranslated = entries
-      .map((e, i) => (e.translated ? -1 : i))
-      .filter((i) => i >= 0);
-    if (untranslated.length === 0) return;
-    doTranslate(untranslated);
+    const isGoogle = provider === "google";
+    if (!isGoogle) {
+      const untranslated = entries
+        .map((e, i) => (Object.keys(e.translations).length < TARGET_LANGUAGES.length ? i : -1))
+        .filter((i) => i >= 0);
+      if (untranslated.length === 0) return;
+      doTranslate(untranslated, false);
+    } else {
+      const untranslated = entries
+        .map((e, i) => (Object.keys(e.translations).length < TARGET_LANGUAGES.length ? i : -1))
+        .filter((i) => i >= 0);
+      if (untranslated.length === 0) return;
+      doTranslate(untranslated, true);
+    }
   };
 
   const handleTranslateSelected = () => {
     if (selectedIndices.length === 0) return;
-    doTranslate(selectedIndices);
+    doTranslate(selectedIndices, provider === "google");
   };
+
+  const anyTranslating = Object.values(translating).some(Boolean) || Object.values(googleTranslating).some(Boolean);
 
   return (
     <aside className="w-56 shrink-0 border-r p-3 flex flex-col gap-3 bg-gray-50 overflow-y-auto">
@@ -187,19 +167,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      <div>
-        <label className="text-xs font-medium text-gray-500">目标语言</label>
-        <select
-          value={targetLanguage}
-          onChange={(e) => setTargetLanguage(e.target.value)}
-          className="w-full mt-1 p-1.5 border rounded text-sm"
-        >
-          {TARGET_LANGUAGES.map((lang) => (
-            <option key={lang.id} value={lang.id}>{lang.label}</option>
-          ))}
-        </select>
-      </div>
-
       {provider !== "google" && (
         <div>
           <label className="text-xs font-medium text-gray-500">系统提示词</label>
@@ -208,27 +175,25 @@ export default function Sidebar() {
             onChange={(e) => setSystemPrompt(e.target.value)}
             rows={4}
             className="w-full mt-1 p-1.5 border rounded text-xs resize-y"
-            placeholder="编辑提示词，或在上方选择「自定义」"
+            placeholder="编辑提示词"
           />
-          {targetLanguage !== "custom" && (
-            <p className="mt-1 text-[10px] text-gray-400">
-              根据目标语言自动生成。修改后将切换为「自定义」。
-            </p>
-          )}
+          <p className="mt-1 text-[10px] text-gray-400">
+            切换语言 Tab 时自动更新提示词
+          </p>
         </div>
       )}
 
       <div className="flex flex-col gap-1.5">
         <button
           onClick={handleTranslateAll}
-          disabled={translating || (provider !== "google" && !model) || entries.length === 0}
+          disabled={anyTranslating || (provider !== "google" && !model) || entries.length === 0}
           className="px-3 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
         >
-          全部翻译
+          全部翻译 (8 语言)
         </button>
         <button
           onClick={handleTranslateSelected}
-          disabled={translating || selectedIndices.length === 0}
+          disabled={anyTranslating || selectedIndices.length === 0}
           className="px-3 py-1.5 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 disabled:opacity-50"
         >
           翻译选中
@@ -236,42 +201,13 @@ export default function Sidebar() {
       </div>
 
       {progress && <p className="text-xs text-blue-600">{progress}</p>}
+      {googleProgress && <p className="text-xs text-emerald-600">{googleProgress}</p>}
       {translateError && (
         <p className="text-xs text-red-500">{translateError}</p>
       )}
 
-      <div className="border-t pt-2">
-        <p className="text-xs font-medium text-gray-500 mb-1">Google 翻译（替代方案）</p>
-        <div className="flex flex-col gap-1.5">
-          <button
-            onClick={() => {
-              const untranslated = entries
-                .map((e, i) => (e.translated ? -1 : i))
-                .filter((i) => i >= 0);
-              if (untranslated.length === 0) return;
-              doGoogleTranslate(untranslated);
-            }}
-            disabled={googleTranslating || entries.length === 0}
-            className="px-3 py-1.5 bg-emerald-500 text-white rounded text-sm hover:bg-emerald-600 disabled:opacity-50"
-          >
-            全部翻译
-          </button>
-          <button
-            onClick={() => {
-              if (selectedIndices.length === 0) return;
-              doGoogleTranslate(selectedIndices);
-            }}
-            disabled={googleTranslating || selectedIndices.length === 0}
-            className="px-3 py-1.5 bg-sky-500 text-white rounded text-sm hover:bg-sky-600 disabled:opacity-50"
-          >
-            翻译选中
-          </button>
-        </div>
-        {googleProgress && <p className="text-xs text-blue-600 mt-1">{googleProgress}</p>}
-      </div>
-
       <div className="text-xs text-gray-400 mt-auto">
-        共 {entries.length} 条 · 已译 {entries.filter((e) => e.translated).length} 条
+        共 {entries.length} 条
       </div>
     </aside>
   );

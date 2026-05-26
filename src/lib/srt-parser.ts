@@ -37,23 +37,24 @@ export function parseSrt(content: string): SubtitleEntry[] {
       startTime: start.replace(".", ","),
       endTime: end.replace(".", ","),
       original,
-      translated: "",
+      translations: {},
     });
   }
 
   return entries;
 }
 
-export function serializeSrt(entries: SubtitleEntry[], bilingual: boolean): string {
+export function serializeSrt(entries: SubtitleEntry[], languageId: string, bilingual: boolean): string {
   return entries
     .map((entry, idx) => {
       const id = idx + 1;
       const time = `${entry.startTime} --> ${entry.endTime}`;
+      const trans = entry.translations[languageId] || "";
       const text = bilingual
-        ? entry.translated.trim()
-          ? `${entry.original}\n${entry.translated}`
+        ? trans.trim()
+          ? `${entry.original}\n${trans}`
           : entry.original
-        : entry.translated.trim() || entry.original;
+        : trans.trim() || entry.original;
       return `${id}\n${time}\n${text}`;
     })
     .join("\n\n") + "\n";

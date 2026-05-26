@@ -1,4 +1,5 @@
 import { parseSrt, serializeSrt } from "../srt-parser";
+import { SubtitleEntry } from "@/types/subtitle";
 
 const sampleSrt = `1
 00:00:01,000 --> 00:00:03,000
@@ -18,7 +19,7 @@ describe("parseSrt", () => {
     expect(entries[0].startTime).toBe("00:00:01,000");
     expect(entries[0].endTime).toBe("00:00:03,000");
     expect(entries[0].original).toBe("Hello world");
-    expect(entries[0].translated).toBe("");
+    expect(entries[0].translations).toEqual({});
     expect(entries[1].original).toBe("Good morning");
   });
 
@@ -66,36 +67,36 @@ Third subtitle
 
 describe("serializeSrt", () => {
   it("should serialize entries to SRT format", () => {
-    const entries = [
-      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "你好" },
+    const entries: SubtitleEntry[] = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translations: { "zh-TW": "你好" } },
     ];
-    const result = serializeSrt(entries, false);
+    const result = serializeSrt(entries, "zh-TW", false);
     expect(result).toContain("00:00:01,000 --> 00:00:03,000");
     expect(result).toContain("你好");
   });
 
   it("should produce bilingual SRT", () => {
-    const entries = [
-      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "你好" },
+    const entries: SubtitleEntry[] = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translations: { "zh-TW": "你好" } },
     ];
-    const result = serializeSrt(entries, true);
+    const result = serializeSrt(entries, "zh-TW", true);
     expect(result).toContain("Hello\n你好");
   });
 
   it("should not duplicate original when translation is empty in bilingual mode", () => {
-    const entries = [
-      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "" },
+    const entries: SubtitleEntry[] = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translations: {} },
     ];
-    const result = serializeSrt(entries, true);
+    const result = serializeSrt(entries, "zh-TW", true);
     expect(result).toContain("Hello");
     expect(result).not.toContain("Hello\nHello");
   });
 
   it("should output only original when translation is whitespace in bilingual mode", () => {
-    const entries = [
-      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translated: "   " },
+    const entries: SubtitleEntry[] = [
+      { id: 1, startTime: "00:00:01,000", endTime: "00:00:03,000", original: "Hello", translations: { "zh-TW": "   " } },
     ];
-    const result = serializeSrt(entries, true);
+    const result = serializeSrt(entries, "zh-TW", true);
     expect(result).toContain("Hello");
     expect(result).not.toContain("Hello\nHello");
   });

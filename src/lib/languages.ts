@@ -5,8 +5,7 @@ export interface TargetLanguage {
 }
 
 export const TARGET_LANGUAGES: TargetLanguage[] = [
-  { id: "zh-TW", label: "中文（繁體）", promptName: "Traditional Chinese" },
-  { id: "en", label: "英语", promptName: "English" },
+  { id: "zh-TW", label: "中文", promptName: "Traditional Chinese" },
   { id: "ja", label: "日本語", promptName: "Japanese" },
   { id: "ko", label: "한국어", promptName: "Korean" },
   { id: "es", label: "Español", promptName: "Spanish" },
@@ -14,10 +13,9 @@ export const TARGET_LANGUAGES: TargetLanguage[] = [
   { id: "de", label: "Deutsch", promptName: "German" },
   { id: "pt", label: "Português", promptName: "Portuguese" },
   { id: "ru", label: "Русский", promptName: "Russian" },
-  { id: "custom", label: "自定义", promptName: "" },
 ];
 
-export const DEFAULT_TARGET_LANGUAGE = "en";
+export const DEFAULT_ACTIVE_TAB = "zh-TW";
 
 export function getTargetLanguage(id: string): TargetLanguage | undefined {
   return TARGET_LANGUAGES.find((l) => l.id === id);
@@ -27,7 +25,7 @@ const CONTEXT_AWARE_PROMPT = `Before translating, read the full subtitle script 
 
 export function buildDefaultSystemPrompt(languageId: string): string {
   const lang = getTargetLanguage(languageId);
-  if (!lang || lang.id === "custom") {
+  if (!lang) {
     return `You are a professional subtitle translator. ${CONTEXT_AWARE_PROMPT}`;
   }
   return `You are a professional subtitle translator. ${CONTEXT_AWARE_PROMPT} Target language: ${lang.promptName}.`;
