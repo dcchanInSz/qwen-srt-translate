@@ -23,12 +23,8 @@ export function getTargetLanguage(id: string): TargetLanguage | undefined {
 
 const CONTEXT_AWARE_PROMPT = `Before translating, read the full subtitle script in the user message to understand the overall plot, characters, relationships, tone, and recurring terms. Use that context for consistent names and wording. Translate only the lines in [SEGMENTS TO TRANSLATE]. Preserve natural tone and timing-friendly brevity. Do not output any reasoning or analysis. Return only the translations.`;
 
-export function buildDefaultSystemPrompt(languageId: string): string {
-  const lang = getTargetLanguage(languageId);
-  if (!lang) {
-    return `You are a professional subtitle translator. ${CONTEXT_AWARE_PROMPT}`;
-  }
-  return `You are a professional subtitle translator. ${CONTEXT_AWARE_PROMPT} Target language: ${lang.promptName}.`;
+export function buildDefaultSystemPrompt(_languageId: string): string {
+  return `You are a professional subtitle translator. ${CONTEXT_AWARE_PROMPT}`;
 }
 
 export function getTargetLanguageLabel(languageId: string): string {

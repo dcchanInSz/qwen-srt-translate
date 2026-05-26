@@ -1,24 +1,31 @@
-import { generateText, stepCountIs, LanguageModel } from "ai";
-import { checkEmpty } from "./tools";
+import { generateText, LanguageModel } from "ai";
 
-const BATCH_SEPARATOR = "\n---\n";
-
-function buildTranslationPrompt(
+function buildPrompt(
   entries: { index: number; text: string }[],
   fullContext: string[],
   targetLanguage: string
 ): string {
   const script = fullContext.map((line, i) => `${i + 1}. ${line}`).join("\n");
-  const segments = entries.map((e) => e.text).join(BATCH_SEPARATOR);
+  const segments = entries.map((e) => e.text).join("\n---\n");
 
-  return `[FULL SUBTITLE SCRIPT - for context only, do not translate]
+  return `[FULL SUBTITLE SCRIPT - context only, do NOT translate this section]
 ${script}
 
 [SEGMENTS TO TRANSLATE]
 ${segments}
 
-Translate the ${entries.length} segments above into ${targetLanguage}. Return translations separated by "---", one per segment, in the same order.
-After translating, call the checkEmpty tool with all translations to verify none are empty. If any are empty, retranslate those and check again.`;
+Translate each segment above into ${targetLanguage}. Important rules:
+- Output ONLY the translations, separated by "---" (three dashes on their own line)
+- Do NOT include the original English text
+- Do NOT add arrows, prefixes, or numbering
+- One translation per segment, in the same order as input`;
+}
+
+function splitTranslations(text: string): string[] {
+  return text
+    .split(/\n*-{3,}\n*/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 }
 
 export async function translateWithAgent(
@@ -33,25 +40,55 @@ export async function translateWithAgent(
     targetLanguage,
   });
 
-  const prompt = buildTranslationPrompt(entries, fullContext, targetLanguage);
+  const prompt = buildPrompt(entries, fullContext, targetLanguage);
 
   const result = await generateText({
     model: provider,
     system: systemPrompt,
     prompt,
-    stopWhen: stepCountIs(5),
-    tools: { checkEmpty },
   });
+
+  console.log("[agent] raw output length", result.text.length);
+
+  let translatedTexts = splitTranslations(result.text);
+
+  const results = entries.map((entry, i) => ({
+    index: entry.index,
+    text: translatedTexts[i] || "",
+  }));
+
+  const emptyIndices = results
+    .map((r, i) => (!r.text.trim() ? i : -1))
+    .filter((i) => i >= 0);
+
+  if (emptyIndices.length > 0 && emptyIndices.length < entries.length) {
+    console.log("[agent] retrying empty indices:", emptyIndices);
+    const retryEntries = emptyIndices.map((i) => entries[i]);
+    const retrySegments = retryEntries.map((e) => e.text).join("\n---\n");
+    const retryPrompt = `Translate each segment into ${targetLanguage}. Output ONLY translations separated by "---". Do NOT include original text.\n\n${retrySegments}`;
+
+    try {
+      const retryResult = await generateText({
+        model: provider,
+        system: systemPrompt,
+        prompt: retryPrompt,
+      });
+      const retryParts = splitTranslations(retryResult.text);
+      retryEntries.forEach((entry, ri) => {
+        if (ri < retryParts.length && retryParts[ri]) {
+          const idx = entries.findIndex((e) => e.index === entry.index);
+          if (idx >= 0) results[idx].text = retryParts[ri];
+        }
+      });
+    } catch {
+      console.warn("[agent] retry failed for", emptyIndices);
+    }
+  }
 
   console.log("[agent] finished", {
-    steps: result.steps?.length,
-    textLength: result.text.length,
+    translated: results.filter((r) => r.text.trim()).length,
+    empty: results.filter((r) => !r.text.trim()).length,
   });
 
-  const translatedTexts = result.text.split(BATCH_SEPARATOR).map((t) => t.trim());
-
-  return entries.map((entry, i) => ({
-    index: entry.index,
-    text: translatedTexts[i] ?? "",
-  }));
+  return results;
 }

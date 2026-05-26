@@ -7,8 +7,9 @@ describe("context-aware prompts", () => {
     expect(prompt).toMatch(/context/i);
   });
 
-  it("includes target language in prompt", () => {
-    const prompt = buildDefaultSystemPrompt("ja");
-    expect(prompt).toContain("Japanese");
+  it("system prompt is language-independent", () => {
+    const en = buildDefaultSystemPrompt("en");
+    const ja = buildDefaultSystemPrompt("ja");
+    expect(en).toBe(ja);
   });
 });

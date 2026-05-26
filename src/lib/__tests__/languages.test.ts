@@ -13,10 +13,10 @@ describe("languages", () => {
     expect(ids).not.toContain("custom");
   });
 
-  it("builds prompt with target language name", () => {
+  it("builds prompt without target language (handled by agent)", () => {
     const prompt = buildDefaultSystemPrompt("ja");
-    expect(prompt).toContain("Japanese");
     expect(prompt).toContain("full subtitle script");
+    expect(prompt).not.toContain("Japanese");
   });
 
   it("returns label for known language", () => {

@@ -34,14 +34,10 @@ export async function POST(request: NextRequest) {
       }
       const lang = targetLanguages[i];
       try {
-        const langPrompt = systemPrompt.includes("Target language:")
-          ? systemPrompt
-          : `${systemPrompt}\nTarget language: ${lang}.`;
-
         const translated = await translate(
           provider,
           model,
-          langPrompt,
+          systemPrompt,
           texts,
           context,
           lang
