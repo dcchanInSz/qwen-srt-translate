@@ -5,7 +5,6 @@ export interface TargetLanguage {
 }
 
 export const TARGET_LANGUAGES: TargetLanguage[] = [
-  { id: "zh", label: "中文（简体）", promptName: "Simplified Chinese" },
   { id: "zh-TW", label: "中文（繁體）", promptName: "Traditional Chinese" },
   { id: "en", label: "英语", promptName: "English" },
   { id: "ja", label: "日本語", promptName: "Japanese" },
@@ -18,7 +17,7 @@ export const TARGET_LANGUAGES: TargetLanguage[] = [
   { id: "custom", label: "自定义", promptName: "" },
 ];
 
-export const DEFAULT_TARGET_LANGUAGE = "zh";
+export const DEFAULT_TARGET_LANGUAGE = "en";
 
 export function getTargetLanguage(id: string): TargetLanguage | undefined {
   return TARGET_LANGUAGES.find((l) => l.id === id);

@@ -7,7 +7,6 @@ import {
 describe("languages", () => {
   it("includes common target languages", () => {
     const ids = TARGET_LANGUAGES.map((l) => l.id);
-    expect(ids).toContain("zh");
     expect(ids).toContain("en");
     expect(ids).toContain("ja");
     expect(ids).toContain("custom");

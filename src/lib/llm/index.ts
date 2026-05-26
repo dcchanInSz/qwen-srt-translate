@@ -38,6 +38,6 @@ export async function translate(
     case "ollama":
       return ollama.translate(model, systemPrompt, texts, fullContext);
     case "google":
-      return google.translate(texts, targetLanguage || "zh");
+      return google.translate(texts, targetLanguage || "en");
   }
 }

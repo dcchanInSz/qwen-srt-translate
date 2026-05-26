@@ -1,5 +1,4 @@
 const GOOGLE_LANG_MAP: Record<string, string> = {
-  zh: "zh-CN",
   "zh-TW": "zh-TW",
   en: "en",
   ja: "ja",

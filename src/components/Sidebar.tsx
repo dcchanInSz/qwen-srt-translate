@@ -16,6 +16,8 @@ export default function Sidebar() {
   const [loadingModels, setLoadingModels] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [progress, setProgress] = useState("");
+  const [googleTranslating, setGoogleTranslating] = useState(false);
+  const [googleProgress, setGoogleProgress] = useState("");
 
   const fetchModels = useCallback(async () => {
     setLoadingModels(true);
@@ -90,6 +92,48 @@ export default function Sidebar() {
       setTranslateError(err instanceof Error ? err.message : "翻译失败");
     }
     setTranslating(false);
+  };
+
+  const doGoogleTranslate = async (indices: number[]) => {
+    setGoogleTranslating(true);
+    setTranslateError(null);
+    setGoogleProgress(`Google 正在翻译 ${indices.length} 条…`);
+
+    try {
+      const reqBody: Record<string, unknown> = {
+        provider: "google",
+        model: "",
+        systemPrompt: "",
+        targetLanguage,
+        context: entries.map((e) => e.original),
+        entries: indices.map((i) => ({
+          index: i,
+          text: entries[i].original,
+        })),
+      };
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(reqBody),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setTranslateError(data.error);
+      } else {
+        const translations = data.translations as { index: number; text: string }[];
+        translations.forEach((t) => {
+          const currentEntries = useStore.getState().entries;
+          const entry = currentEntries[t.index];
+          if (entry) {
+            updateEntry(entry.id, { translated: t.text });
+          }
+        });
+        setGoogleProgress("");
+      }
+    } catch (err) {
+      setTranslateError(err instanceof Error ? err.message : "翻译失败");
+    }
+    setGoogleTranslating(false);
   };
 
   const handleTranslateAll = () => {
@@ -195,6 +239,36 @@ export default function Sidebar() {
       {translateError && (
         <p className="text-xs text-red-500">{translateError}</p>
       )}
+
+      <div className="border-t pt-2">
+        <p className="text-xs font-medium text-gray-500 mb-1">Google 翻译（替代方案）</p>
+        <div className="flex flex-col gap-1.5">
+          <button
+            onClick={() => {
+              const untranslated = entries
+                .map((e, i) => (e.translated ? -1 : i))
+                .filter((i) => i >= 0);
+              if (untranslated.length === 0) return;
+              doGoogleTranslate(untranslated);
+            }}
+            disabled={googleTranslating || entries.length === 0}
+            className="px-3 py-1.5 bg-emerald-500 text-white rounded text-sm hover:bg-emerald-600 disabled:opacity-50"
+          >
+            全部翻译
+          </button>
+          <button
+            onClick={() => {
+              if (selectedIndices.length === 0) return;
+              doGoogleTranslate(selectedIndices);
+            }}
+            disabled={googleTranslating || selectedIndices.length === 0}
+            className="px-3 py-1.5 bg-sky-500 text-white rounded text-sm hover:bg-sky-600 disabled:opacity-50"
+          >
+            翻译选中
+          </button>
+        </div>
+        {googleProgress && <p className="text-xs text-blue-600 mt-1">{googleProgress}</p>}
+      </div>
 
       <div className="text-xs text-gray-400 mt-auto">
         共 {entries.length} 条 · 已译 {entries.filter((e) => e.translated).length} 条
