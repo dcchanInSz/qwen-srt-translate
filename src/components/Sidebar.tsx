@@ -7,7 +7,7 @@ import { TARGET_LANGUAGES } from "@/lib/languages";
 
 export default function Sidebar() {
   const {
-    entries, selectedIndices, provider, model, systemPrompt,
+    entries, selectedIndices, provider, model, activeTab, systemPrompt,
     translateError,
     setProvider, setModel, setSystemPrompt, setTranslateError,
     updateTranslation,
@@ -41,28 +41,27 @@ export default function Sidebar() {
     fetchModels();
   }, [fetchModels]);
 
-  const doTranslate = async (indices: number[], isGoogle: boolean) => {
+  const doTranslate = async (indices: number[], targetLangs: string[], isGoogle: boolean) => {
     if (!isGoogle && !model) {
       setTranslateError("请先选择模型");
       return;
     }
-    const allLangs = TARGET_LANGUAGES.map((l) => l.id);
 
     const setter = isGoogle ? setGoogleTranslating : setTranslating;
     const progressSetter = isGoogle ? setGoogleProgress : setProgress;
 
     const initial: Record<string, boolean> = {};
-    allLangs.forEach((l) => (initial[l] = true));
+    targetLangs.forEach((l) => (initial[l] = true));
     setter(initial);
     setTranslateError(null);
-    progressSetter(`正在翻译 ${indices.length} 条 × ${allLangs.length} 语言…`);
+    progressSetter(`正在翻译 ${indices.length} 条 × ${targetLangs.length} 语言…`);
 
     try {
       const reqBody: Record<string, unknown> = {
         provider: isGoogle ? "google" : provider,
         model: isGoogle ? "" : model,
         systemPrompt,
-        targetLanguages: allLangs,
+        targetLanguages: targetLangs,
         context: entries.map((e) => e.original),
         entries: indices.map((i) => ({
           index: i,
@@ -107,24 +106,17 @@ export default function Sidebar() {
 
   const handleTranslateAll = () => {
     const isGoogle = provider === "google";
-    if (!isGoogle) {
-      const untranslated = entries
-        .map((e, i) => (Object.keys(e.translations).length < TARGET_LANGUAGES.length ? i : -1))
-        .filter((i) => i >= 0);
-      if (untranslated.length === 0) return;
-      doTranslate(untranslated, false);
-    } else {
-      const untranslated = entries
-        .map((e, i) => (Object.keys(e.translations).length < TARGET_LANGUAGES.length ? i : -1))
-        .filter((i) => i >= 0);
-      if (untranslated.length === 0) return;
-      doTranslate(untranslated, true);
-    }
+    const allLangs = TARGET_LANGUAGES.map((l) => l.id);
+    const untranslated = entries
+      .map((e, i) => (Object.keys(e.translations).length < allLangs.length ? i : -1))
+      .filter((i) => i >= 0);
+    if (untranslated.length === 0) return;
+    doTranslate(untranslated, allLangs, isGoogle);
   };
 
   const handleTranslateSelected = () => {
     if (selectedIndices.length === 0) return;
-    doTranslate(selectedIndices, provider === "google");
+    doTranslate(selectedIndices, [activeTab], provider === "google");
   };
 
   const anyTranslating = Object.values(translating).some(Boolean) || Object.values(googleTranslating).some(Boolean);
