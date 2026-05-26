@@ -1,7 +1,30 @@
 {
   "name": "qwen-srt-translate",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "description": "Local-first subtitle translation tool using Ollama / LM Studio LLMs with multi-language support and multi-format export.",
+  "keywords": [
+    "subtitle",
+    "srt",
+    "translation",
+    "ollama",
+    "lm-studio",
+    "llm",
+    "nextjs",
+    "subtitles",
+    "translate",
+    "local-llm"
+  ],
+  "homepage": "https://github.com/dcchanInSz/qwen-srt-translate#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcchanInSz/qwen-srt-translate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dcchanInSz/qwen-srt-translate/issues"
+  },
+  "license": "MIT",
+  "author": "dcchanInSz",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

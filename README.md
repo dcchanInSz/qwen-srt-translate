@@ -1,44 +1,94 @@
 # Qwen SRT Translate
 
-基于 Next.js 的字幕翻译工具，支持通过本地 **Ollama** 或 **LM Studio** 调用大模型进行翻译。
+[中文文档](./README.zh-CN.md)
 
-## 前置条件
+A Next.js-powered subtitle translation tool that uses local LLMs via **Ollama** or **LM Studio** to translate `.srt` files. Supports 8 target languages, multi-language tabs, inline editing, and multi-format export (SRT, VTT, ASS, JSON).
 
-任选其一（或两者都装）：
+## Features
 
-- **Ollama**：默认 `http://localhost:11434`
-- **LM Studio**：在 LM Studio 中加载模型并开启 Local Server（OpenAI 兼容 API），默认 `http://localhost:1234/v1`
+- **Local-first** — All translations run through your local LLM server; no cloud API keys required
+- **Context-aware** — Sends the full subtitle script as context so the LLM understands plot, characters, and terminology
+- **8 target languages** — Traditional Chinese, Japanese, Korean, Spanish, French, German, Portuguese, Russian
+- **Multi-language tabs** — Switch between language translations side by side
+- **Inline editing** — Double-click any cell to edit timestamps, original text, or translations
+- **Row operations** — Move, split, and merge translation rows
+- **Multi-format export** — Download translations as SRT, VTT, ASS, JSON, or all-in-one ZIP
+- **Google Translate fallback** — Built-in free Google Translate for quick translations without a local LLM
+- **Docker support** — Ready-to-use Dockerfile and docker-compose.yml
 
-## 环境变量（可选）
+## Screenshot
 
-| 变量 | 默认值 | 说明 |
-|------|--------|------|
-| `OLLAMA_BASE` | `http://localhost:11434` | Ollama API 地址 |
-| `LM_STUDIO_BASE` | `http://localhost:1234/v1` | LM Studio OpenAI 兼容 API 根路径 |
+<!-- TODO: add screenshot -->
 
-## 使用 LM Studio
+## Prerequisites
 
-1. 在 LM Studio 中下载并加载模型
-2. 打开 **Local Server**，确认端口（默认 1234）
-3. 启动本应用：`npm run dev`
-4. 在侧边栏 **Provider** 选择 **LM Studio**，点击 **Refresh models** 选择模型后翻译
+Choose one (or install both):
 
-## 目标语言
+- **[Ollama](https://ollama.com)** — Run LLMs locally. Default: `http://localhost:11434`
+- **[LM Studio](https://lmstudio.ai)** — Load a model and start the Local Server (OpenAI-compatible API). Default: `http://localhost:1234/v1`
 
-侧边栏 **Target Language** 可选择多种目标语言（中文简/繁、英语、日语、韩语、西法德葡俄等）。选择后会自动生成对应的系统提示词；手动编辑提示词将切换为 **Custom** 模式。
-
-翻译时会将**完整原文字幕**作为上下文发给模型，让其先理解整体情节、人物与术语，再翻译当前选中的句子。
-
-## 开发
+## Quick Start
 
 ```bash
+# Install dependencies
 npm install
+
+# Start development server
 npm run dev
 ```
 
-浏览器打开 [http://localhost:3000](http://localhost:3000)。
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Usage
+
+1. Click **Load SRT** or drag a `.srt` file onto the page
+2. Select a **Provider** (Ollama / LM Studio / Google Translate) in the sidebar
+3. For Ollama or LM Studio, click **Refresh Models** and select a model
+4. Choose a **Target Language** tab and click **Translate Selected** (or **Translate All** for all 8 languages)
+5. Review and edit translations inline, then **Export** in your preferred format
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_BASE` | `http://localhost:11434` | Ollama API base URL |
+| `LM_STUDIO_BASE` | `http://localhost:1234/v1` | LM Studio OpenAI-compatible API base URL |
+
+## Docker
 
 ```bash
-npm run build
-npm test
+# Build and run with Docker Compose
+docker compose up -d --build
 ```
+
+The app will be available at [http://localhost:3000](http://localhost:3000). The container is configured to connect to Ollama/LM Studio running on your host machine via `host.docker.internal`.
+
+## Development
+
+```bash
+# Run tests
+npm test
+
+# Lint
+npm run lint
+
+# Production build
+npm run build
+npm start
+```
+
+## Tech Stack
+
+- [Next.js](https://nextjs.org) 16 (App Router)
+- [React](https://react.dev) 19
+- [Zustand](https://zustand-demo.pmnd.rs) for state management
+- [Vercel AI SDK](https://sdk.vercel.ai) for LLM integration
+- [Tailwind CSS](https://tailwindcss.com) 4
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+
+## License
+
+[MIT](./LICENSE)
