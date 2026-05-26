@@ -3,8 +3,8 @@ export interface SubtitleEntry {
   startTime: string;
   endTime: string;
   original: string;
-  translated: string;
-  translatedAt?: number;
+  translations: Record<string, string>;
+  translatedAt?: Record<string, number>;
 }
 
 import type { LlmProvider } from "@/lib/llm";
@@ -13,14 +13,14 @@ export interface TranslateRequest {
   provider: LlmProvider;
   model: string;
   systemPrompt: string;
-  /** Full original script for plot/context understanding */
   context: string[];
   entries: { index: number; text: string }[];
-  targetLanguage?: string;
+  targetLanguages: string[];
 }
 
 export interface TranslateResponse {
-  translations: { index: number; text: string }[];
+  results: Record<string, { index: number; text: string }[]>;
+  errors?: Record<string, string>;
 }
 
-export type ExportFormat = "srt" | "srt-bilingual" | "vtt" | "vtt-bilingual" | "ass" | "json";
+export type ExportFormat = "srt" | "vtt" | "ass" | "json";

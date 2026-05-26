@@ -3,10 +3,10 @@
 import { create } from "zustand";
 import {
   buildDefaultSystemPrompt,
-  DEFAULT_TARGET_LANGUAGE,
+  DEFAULT_ACTIVE_TAB,
 } from "@/lib/languages";
 import type { LlmProvider } from "@/lib/llm";
-import { SubtitleEntry } from "@/types/subtitle";
+import type { SubtitleEntry } from "@/types/subtitle";
 
 interface AppState {
   entries: SubtitleEntry[];
@@ -14,21 +14,22 @@ interface AppState {
   selectedIndices: number[];
   provider: LlmProvider;
   model: string;
-  targetLanguage: string;
+  activeTab: string;
   systemPrompt: string;
   translateError: string | null;
 
   setEntries: (entries: SubtitleEntry[]) => void;
   setFileName: (name: string | null) => void;
   updateEntry: (id: number, updates: Partial<SubtitleEntry>) => void;
+  updateTranslation: (id: number, languageId: string, text: string) => void;
   setSelectedIndices: (indices: number[]) => void;
   toggleSelected: (index: number) => void;
   setProvider: (provider: LlmProvider) => void;
   setModel: (model: string) => void;
-  setTargetLanguage: (languageId: string) => void;
+  setActiveTab: (tab: string) => void;
   setSystemPrompt: (prompt: string) => void;
   setTranslateError: (error: string | null) => void;
-  translatedCount: () => number;
+  translatedCount: (languageId: string) => number;
   moveEntry: (index: number, direction: -1 | 1) => void;
   splitEntry: (index: number) => void;
   mergeWithAbove: (index: number) => void;
@@ -40,18 +41,32 @@ export const useStore = create<AppState>((set, get) => ({
   selectedIndices: [],
   provider: "lmstudio",
   model: "",
-  targetLanguage: DEFAULT_TARGET_LANGUAGE,
-  systemPrompt: buildDefaultSystemPrompt(DEFAULT_TARGET_LANGUAGE),
+  activeTab: DEFAULT_ACTIVE_TAB,
+  systemPrompt: buildDefaultSystemPrompt(DEFAULT_ACTIVE_TAB),
   translateError: null,
 
   setEntries: (entries) => set({ entries, selectedIndices: [] }),
   setFileName: (fileName) => set({ fileName }),
-  updateEntry: (id, updates) =>
+
+  updateEntry: (id: number, updates: Partial<SubtitleEntry>) =>
     set((state) => ({
       entries: state.entries.map((e) =>
-        e.id === id ? { ...e, ...updates, translatedAt: Date.now() } : e
+        e.id === id ? { ...e, ...updates } : e
       ),
     })),
+
+  updateTranslation: (id, languageId, text) =>
+    set((state) => ({
+      entries: state.entries.map((e) => {
+        if (e.id !== id) return e;
+        return {
+          ...e,
+          translations: { ...e.translations, [languageId]: text },
+          translatedAt: { ...e.translatedAt, [languageId]: Date.now() },
+        };
+      }),
+    })),
+
   setSelectedIndices: (selectedIndices) => set({ selectedIndices }),
   toggleSelected: (index) =>
     set((state) => {
@@ -62,17 +77,18 @@ export const useStore = create<AppState>((set, get) => ({
     }),
   setProvider: (provider) => set({ provider, model: "" }),
   setModel: (model) => set({ model }),
-  setTargetLanguage: (targetLanguage) =>
+
+  setActiveTab: (activeTab) =>
     set({
-      targetLanguage,
+      activeTab,
       systemPrompt:
-        targetLanguage === "custom"
-          ? get().systemPrompt
-          : buildDefaultSystemPrompt(targetLanguage),
+        get().activeTab === activeTab ? get().systemPrompt : buildDefaultSystemPrompt(activeTab),
     }),
-  setSystemPrompt: (systemPrompt) => set({ systemPrompt, targetLanguage: "custom" }),
+
+  setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
   setTranslateError: (translateError) => set({ translateError }),
-  translatedCount: () => get().entries.filter((e) => e.translated).length,
+  translatedCount: (languageId) =>
+    get().entries.filter((e) => e.translations[languageId]).length,
 
   moveEntry: (index, direction) =>
     set((state) => {
@@ -81,39 +97,60 @@ export const useStore = create<AppState>((set, get) => ({
       const entries = [...state.entries];
       const a = entries[index];
       const b = entries[targetIndex];
-      entries[index] = { ...a, translated: b.translated, translatedAt: Date.now() };
-      entries[targetIndex] = { ...b, translated: a.translated, translatedAt: Date.now() };
+      const lang = state.activeTab;
+      const now = Date.now();
+      const aTrans = a.translations[lang] ?? "";
+      const bTrans = b.translations[lang] ?? "";
+      entries[index] = {
+        ...a,
+        translations: { ...a.translations, [lang]: bTrans },
+        translatedAt: { ...a.translatedAt, [lang]: now },
+      };
+      entries[targetIndex] = {
+        ...b,
+        translations: { ...b.translations, [lang]: aTrans },
+        translatedAt: { ...b.translatedAt, [lang]: now },
+      };
       return { entries };
     }),
 
   splitEntry: (index) =>
     set((state) => {
       const entry = state.entries[index];
-      if (!entry || !entry.translated) return state;
+      const lang = state.activeTab;
+      const t = entry.translations[lang];
+      if (!entry || !t) return state;
 
-      const t = entry.translated;
       const mid = Math.floor(t.length / 2);
       const firstHalf = t.slice(0, mid).trim();
       const secondHalf = t.slice(mid).trim();
       if (!firstHalf || !secondHalf) return state;
 
       const entries = [...state.entries];
-      entries[index] = { ...entry, translated: firstHalf, translatedAt: Date.now() };
+      const now = Date.now();
+      entries[index] = {
+        ...entry,
+        translations: { ...entry.translations, [lang]: firstHalf },
+        translatedAt: { ...entry.translatedAt, [lang]: now },
+      };
 
       entries.push({
         id: Math.max(...entries.map((e) => e.id)) + 1 + Math.random(),
         startTime: "",
         endTime: "",
         original: "",
-        translated: "",
+        translations: {},
       });
 
       for (let k = entries.length - 1; k > index + 1; k--) {
-        entries[k] = { ...entries[k], translated: entries[k - 1].translated };
+        entries[k] = {
+          ...entries[k],
+          translations: { ...entries[k].translations, [lang]: entries[k - 1].translations[lang] ?? "" },
+        };
       }
       entries[index + 1] = {
         ...entries[index + 1],
-        translated: secondHalf,
+        translations: { ...entries[index + 1].translations, [lang]: secondHalf },
       };
 
       return { entries };
@@ -125,23 +162,30 @@ export const useStore = create<AppState>((set, get) => ({
       const above = state.entries[index - 1];
       const current = state.entries[index];
       const entries = [...state.entries];
+      const lang = state.activeTab;
+      const now = Date.now();
 
+      const aboveTrans = above.translations[lang] ?? "";
+      const currentTrans = current.translations[lang] ?? "";
       entries[index - 1] = {
         ...above,
-        translated: (above.translated || "") + "\n" + (current.translated || ""),
-        translatedAt: Date.now(),
+        translations: { ...above.translations, [lang]: aboveTrans + "\n" + currentTrans },
+        translatedAt: { ...above.translatedAt, [lang]: now },
       };
 
       for (let k = index; k < entries.length - 1; k++) {
-        entries[k] = { ...entries[k], translated: entries[k + 1].translated };
+        entries[k] = {
+          ...entries[k],
+          translations: { ...entries[k].translations, [lang]: entries[k + 1].translations[lang] ?? "" },
+        };
       }
       entries[entries.length - 1] = {
         ...entries[entries.length - 1],
-        translated: "",
+        translations: { ...entries[entries.length - 1].translations, [lang]: "" },
       };
 
       const last = entries[entries.length - 1];
-      if (!last.original && !last.translated) {
+      if (!last.original && !last.translations[lang]) {
         entries.pop();
       }
 

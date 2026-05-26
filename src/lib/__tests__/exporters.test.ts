@@ -1,4 +1,5 @@
 import { srtTimeToSeconds, serializeJson } from "../exporters";
+import { SubtitleEntry } from "@/types/subtitle";
 
 describe("srtTimeToSeconds", () => {
   it("converts SRT timestamps to seconds", () => {
@@ -10,23 +11,23 @@ describe("srtTimeToSeconds", () => {
 
 describe("serializeJson", () => {
   it("exports entries as JSON array with start, end, text", () => {
-    const entries = [
+    const entries: SubtitleEntry[] = [
       {
         id: 1,
         startTime: "00:00:01,133",
         endTime: "00:00:02,333",
         original: "Hey John.",
-        translated: "你好，约翰。",
+        translations: { "zh-TW": "你好，约翰。" },
       },
       {
         id: 2,
         startTime: "00:00:02,666",
         endTime: "00:00:03,500",
         original: "How is everything?",
-        translated: "",
+        translations: {},
       },
     ];
-    const result = JSON.parse(serializeJson(entries));
+    const result = JSON.parse(serializeJson(entries, "zh-TW"));
     expect(result).toEqual([
       { start: 1.133, end: 2.333, text: "你好，约翰。" },
       { start: 2.666, end: 3.5, text: "How is everything?" },
@@ -34,16 +35,16 @@ describe("serializeJson", () => {
   });
 
   it("preserves newlines in text", () => {
-    const entries = [
+    const entries: SubtitleEntry[] = [
       {
         id: 1,
         startTime: "00:00:12,466",
         endTime: "00:00:15,233",
         original: "Darling please,\nhelp me to take care of my brother, okay?",
-        translated: "亲爱的，\n请帮我照顾弟弟，好吗？",
+        translations: { "zh-TW": "亲爱的，\n请帮我照顾弟弟，好吗？" },
       },
     ];
-    const result = JSON.parse(serializeJson(entries));
+    const result = JSON.parse(serializeJson(entries, "zh-TW"));
     expect(result[0].text).toBe("亲爱的，\n请帮我照顾弟弟，好吗？");
   });
 });

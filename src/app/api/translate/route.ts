@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseProvider, translate } from "@/lib/llm";
-import { TranslateRequest } from "@/types/subtitle";
+import type { TranslateRequest } from "@/types/subtitle";
 
 export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   try {
     const body: TranslateRequest = await request.json();
-    const { model, systemPrompt, context, entries, targetLanguage } = body;
+    const { model, systemPrompt, context, entries, targetLanguages } = body;
     const provider = parseProvider(body.provider);
 
     console.log("[translate] request received", {
@@ -14,8 +14,7 @@ export async function POST(request: NextRequest) {
       model,
       entryCount: entries?.length ?? 0,
       contextLines: context?.length ?? 0,
-      systemPromptChars: systemPrompt?.length ?? 0,
-      targetLanguage,
+      targetLanguages,
     });
 
     if (provider !== "google" && !model) {
@@ -23,45 +22,56 @@ export async function POST(request: NextRequest) {
     }
 
     const texts = entries.map((e) => e.text);
-    const textChars = texts.reduce((n, t) => n + t.length, 0);
-    console.log("[translate] calling LLM", {
-      segmentCount: texts.length,
-      segmentTextChars: textChars,
-      targetLanguage,
-    });
 
-    const llmStartedAt = Date.now();
-    const translated = await translate(
-      provider,
-      model,
-      systemPrompt,
-      texts,
-      context,
-      targetLanguage
-    );
-    console.log("[translate] LLM finished", {
-      llmMs: Date.now() - llmStartedAt,
-      resultCount: translated.length,
-      mismatch: translated.length !== texts.length,
-    });
+    const results: Record<string, { index: number; text: string }[]> = {};
+    const errors: Record<string, string> = {};
 
-    const translations = entries.map((entry, i) => ({
-      index: entry.index,
-      text: translated[i] ?? "",
-    }));
+    const translations: { lang: string; items: { index: number; text: string }[]; error: string | null }[] = [];
 
-    const response: Record<string, unknown> = { translations };
-    if (translated.length !== texts.length) {
-      response._debug = {
-        expectedCount: texts.length,
-        actualCount: translated.length,
-        lmStudioRawResponse: (translated as any).__lmstudioResponse || null,
-        lmStudioContentPreview: (translated as any).__lmstudioPreview ?? "",
-      };
+    for (let i = 0; i < targetLanguages.length; i++) {
+      if (i > 0) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      const lang = targetLanguages[i];
+      try {
+        const translated = await translate(
+          provider,
+          model,
+          systemPrompt,
+          texts,
+          context,
+          lang
+        );
+
+        const items = entries.map((entry, j) => ({
+          index: entry.index,
+          text: translated[j] ?? "",
+        }));
+
+        translations.push({ lang, items, error: null });
+      } catch (err) {
+        translations.push({
+          lang,
+          items: [],
+          error: err instanceof Error ? err.message : "翻译失败",
+        });
+      }
     }
 
-    console.log("[translate] success", { totalMs: Date.now() - startedAt });
-    return NextResponse.json(response);
+    for (const t of translations) {
+      if (t.error) {
+        errors[t.lang] = t.error;
+      }
+      results[t.lang] = t.items;
+    }
+
+    console.log("[translate] success", {
+      totalMs: Date.now() - startedAt,
+      languages: Object.keys(results).length,
+      errors: Object.keys(errors).length,
+    });
+
+    return NextResponse.json({ results, errors: Object.keys(errors).length > 0 ? errors : undefined });
   } catch (error) {
     console.error("[translate] failed", {
       totalMs: Date.now() - startedAt,

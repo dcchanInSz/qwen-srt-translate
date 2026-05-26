@@ -13,29 +13,29 @@ export function srtTimeToSeconds(time: string): number {
   return Math.round(total * 1000) / 1000;
 }
 
-export function serializeJson(entries: SubtitleEntry[]): string {
+export function serializeJson(entries: SubtitleEntry[], languageId: string): string {
   const items = entries.map((entry) => ({
     start: srtTimeToSeconds(entry.startTime),
     end: srtTimeToSeconds(entry.endTime),
-    text: entry.translated.trim() || entry.original,
+    text: (entry.translations[languageId] || "").trim() || entry.original,
   }));
   return JSON.stringify(items);
 }
 
-export function serializeVtt(entries: SubtitleEntry[], bilingual: boolean): string {
+export function serializeVtt(entries: SubtitleEntry[], languageId: string, bilingual: boolean): string {
   let vtt = "WEBVTT\n\n";
   entries.forEach((entry, idx) => {
     const start = entry.startTime.replace(",", ".");
     const end = entry.endTime.replace(",", ".");
     const text = bilingual
-      ? `${entry.original}\n${entry.translated || entry.original}`
-      : entry.translated || entry.original;
+      ? `${entry.original}\n${entry.translations[languageId] || entry.original}`
+      : entry.translations[languageId] || entry.original;
     vtt += `${idx + 1}\n${start} --> ${end}\n${text}\n\n`;
   });
   return vtt;
 }
 
-export function serializeAss(entries: SubtitleEntry[], bilingual: boolean): string {
+export function serializeAss(entries: SubtitleEntry[], languageId: string, bilingual: boolean): string {
   let ass = `[Script Info]
 Title: Translated Subtitles
 ScriptType: v4.00+
@@ -53,8 +53,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
     const start = entry.startTime.replace(",", ".").substring(0, 11);
     const end = entry.endTime.replace(",", ".").substring(0, 11);
     const text = bilingual
-      ? `${entry.original}\\N${entry.translated || entry.original}`
-      : entry.translated || entry.original;
+      ? `${entry.original}\\N${entry.translations[languageId] || entry.original}`
+      : entry.translations[languageId] || entry.original;
     ass += `Dialogue: 0,${start},${end},Default,,0,0,0,,${text}\n`;
   });
 
