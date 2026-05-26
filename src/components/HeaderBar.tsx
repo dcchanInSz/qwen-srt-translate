@@ -21,7 +21,9 @@ async function exportAllLanguages(entries: ReturnType<typeof useStore.getState>[
   };
   const ext = extMap[format];
 
-  for (const lang of TARGET_LANGUAGES) {
+  const allLanguages = [{ id: "en", name: "English" }, ...TARGET_LANGUAGES];
+
+  for (const lang of allLanguages) {
     let content: string;
     if (format === "json") {
       content = serializeJson(entries, lang.id);
