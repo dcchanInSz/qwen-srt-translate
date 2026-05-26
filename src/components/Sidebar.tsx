@@ -15,9 +15,9 @@ export default function Sidebar() {
   const [models, setModels] = useState<string[]>([]);
   const [loadingModels, setLoadingModels] = useState(false);
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
-  const [progress, setProgress] = useState("");
   const [googleTranslating, setGoogleTranslating] = useState<Record<string, boolean>>({});
-  const [googleProgress, setGoogleProgress] = useState("");
+
+  const [translateLog, setTranslateLog] = useState<string[]>([]);
 
   const fetchModels = useCallback(async () => {
     setLoadingModels(true);
@@ -48,60 +48,76 @@ export default function Sidebar() {
     }
 
     const setter = isGoogle ? setGoogleTranslating : setTranslating;
-    const progressSetter = isGoogle ? setGoogleProgress : setProgress;
-
-    const initial: Record<string, boolean> = {};
-    targetLangs.forEach((l) => (initial[l] = true));
-    setter(initial);
     setTranslateError(null);
-    progressSetter(`正在翻译 ${indices.length} 条 × ${targetLangs.length} 语言…`);
+    setTranslateLog([]);
 
-    try {
-      const reqBody: Record<string, unknown> = {
-        provider: isGoogle ? "google" : provider,
-        model: isGoogle ? "" : model,
-        systemPrompt,
-        targetLanguages: targetLangs,
-        context: entries.map((e) => e.original),
-        entries: indices.map((i) => ({
-          index: i,
-          text: entries[i].original,
-        })),
-      };
-      const res = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reqBody),
-      });
-      const data = await res.json();
+    const totalLangs = targetLangs.length;
+    const failedLangs: string[] = [];
 
-      if (data.error && !data.results) {
-        setTranslateError(data.error);
-        setter({});
-        return;
-      }
+    for (let li = 0; li < targetLangs.length; li++) {
+      const lang = targetLangs[li];
+      const langLabel = TARGET_LANGUAGES.find((l) => l.id === lang)?.label || lang;
 
-      const results = data.results as Record<string, { index: number; text: string }[]>;
-      for (const [lang, translations] of Object.entries(results)) {
-        translations.forEach((t) => {
-          const currentEntries = useStore.getState().entries;
-          const entry = currentEntries[t.index];
-          if (entry) {
-            updateTranslation(entry.id, lang, t.text);
-          }
+      setter((prev) => ({ ...prev, [lang]: true }));
+      setTranslateLog((prev) => [...prev, `[${li + 1}/${totalLangs}] ${langLabel} 翻译中…`]);
+
+      try {
+        const reqBody: Record<string, unknown> = {
+          provider: isGoogle ? "google" : provider,
+          model: isGoogle ? "" : model,
+          systemPrompt,
+          targetLanguages: [lang],
+          context: entries.map((e) => e.original),
+          entries: indices.map((i) => ({
+            index: i,
+            text: entries[i].original,
+          })),
+        };
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(reqBody),
         });
+        const data = await res.json();
+
+        if (data.error && !data.results) {
+          failedLangs.push(lang);
+          setTranslateLog((prev) => [...prev, `[${li + 1}/${totalLangs}] ${langLabel} 失败: ${data.error}`]);
+          continue;
+        }
+
+        const results = data.results as Record<string, { index: number; text: string }[]>;
+        for (const [rLang, translations] of Object.entries(results)) {
+          translations.forEach((t) => {
+            const currentEntries = useStore.getState().entries;
+            const entry = currentEntries[t.index];
+            if (entry) {
+              updateTranslation(entry.id, rLang, t.text);
+            }
+          });
+        }
+
+        if (data.errors) {
+          failedLangs.push(lang);
+          setTranslateLog((prev) => [...prev, `[${li + 1}/${totalLangs}] ${langLabel} 部分失败`]);
+        } else {
+          setTranslateLog((prev) => [...prev, `[${li + 1}/${totalLangs}] ${langLabel} ✓ 完成`]);
+        }
+      } catch (err) {
+        failedLangs.push(lang);
+        setTranslateLog((prev) => [...prev, `[${li + 1}/${totalLangs}] ${langLabel} 失败: ${err instanceof Error ? err.message : "未知错误"}`]);
       }
 
-      if (data.errors) {
-        const errLangs = Object.keys(data.errors);
-        setTranslateError(`部分语言翻译失败: ${errLangs.join(", ")}`);
-      }
+      setter((prev) => ({ ...prev, [lang]: false }));
 
-      progressSetter("");
-    } catch (err) {
-      setTranslateError(err instanceof Error ? err.message : "翻译失败");
+      if (li < targetLangs.length - 1) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
     }
-    setter({});
+
+    if (failedLangs.length > 0) {
+      setTranslateError(`${failedLangs.length} 个语言翻译失败: ${failedLangs.join(", ")}`);
+    }
   };
 
   const handleTranslateAll = () => {
@@ -192,8 +208,15 @@ export default function Sidebar() {
         </button>
       </div>
 
-      {progress && <p className="text-xs text-blue-600">{progress}</p>}
-      {googleProgress && <p className="text-xs text-emerald-600">{googleProgress}</p>}
+      {translateLog.length > 0 && (
+        <div className="text-[11px] text-gray-600 space-y-0.5 max-h-48 overflow-y-auto">
+          {translateLog.map((line, i) => (
+            <div key={i} className={line.includes("失败") ? "text-red-500" : line.includes("✓") ? "text-green-600" : ""}>
+              {line}
+            </div>
+          ))}
+        </div>
+      )}
       {translateError && (
         <p className="text-xs text-red-500">{translateError}</p>
       )}
