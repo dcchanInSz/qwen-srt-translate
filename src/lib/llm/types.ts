@@ -20,7 +20,7 @@ Rules:
 2. Translate only the lines in [SEGMENTS TO TRANSLATE].
 3. Segments to translate are separated by "---". Return translations with the same "---" separators, one translation per segment.
 4. Do not add explanations or extra text.
-5. Do NOT think step by step. Return only the translation results directly, without any reasoning, analysis, or thinking process.`;
+5. Do not add explanations or extra text. Return only the translation results directly, without any reasoning or analysis.`;
 }
 
 export function buildUserContent(fullContext: string[], texts: string[]): string {
