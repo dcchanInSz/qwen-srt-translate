@@ -4,9 +4,39 @@ import { create } from "zustand";
 import {
   buildDefaultSystemPrompt,
   DEFAULT_ACTIVE_TAB,
+  DEFAULT_SOURCE_LANGUAGE,
+  DEFAULT_TARGET_LANGUAGES,
+  type SourceLanguage,
+  type TargetLanguage,
 } from "@/lib/languages";
-import type { LlmProvider } from "@/lib/llm";
+import type { LlmProvider, ProviderConfig } from "@/lib/llm";
+import { DEFAULT_PROVIDER_CONFIGS } from "@/lib/llm";
 import type { SubtitleEntry } from "@/types/subtitle";
+
+function loadProviderConfigs(): Record<LlmProvider, ProviderConfig> {
+  if (typeof window === "undefined") return { ...DEFAULT_PROVIDER_CONFIGS };
+  try {
+    const stored = localStorage.getItem("app-provider-configs");
+    if (stored) {
+      const parsed = JSON.parse(stored) as Record<string, Partial<ProviderConfig>>;
+      const merged = { ...DEFAULT_PROVIDER_CONFIGS };
+      for (const key of Object.keys(merged) as LlmProvider[]) {
+        if (parsed[key]) {
+          merged[key] = { ...merged[key], ...parsed[key] };
+        }
+      }
+      return merged;
+    }
+  } catch { /* ignore */ }
+  return { ...DEFAULT_PROVIDER_CONFIGS };
+}
+
+function saveProviderConfigs(configs: Record<LlmProvider, ProviderConfig>) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("app-provider-configs", JSON.stringify(configs));
+  } catch { /* ignore */ }
+}
 
 interface AppState {
   entries: SubtitleEntry[];
@@ -17,6 +47,9 @@ interface AppState {
   activeTab: string;
   systemPrompt: string;
   translateError: string | null;
+  sourceLanguage: SourceLanguage;
+  targetLanguages: TargetLanguage[];
+  providerConfigs: Record<LlmProvider, ProviderConfig>;
 
   setEntries: (entries: SubtitleEntry[]) => void;
   setFileName: (name: string | null) => void;
@@ -29,10 +62,13 @@ interface AppState {
   setActiveTab: (tab: string) => void;
   setSystemPrompt: (prompt: string) => void;
   setTranslateError: (error: string | null) => void;
+  setSourceLanguage: (sourceLanguage: SourceLanguage) => void;
+  setTargetLanguages: (targetLanguages: TargetLanguage[]) => void;
   translatedCount: (languageId: string) => number;
   moveEntry: (index: number, direction: -1 | 1) => void;
   splitEntry: (index: number) => void;
   mergeWithAbove: (index: number) => void;
+  setProviderConfig: (providerId: LlmProvider, config: Partial<ProviderConfig>) => void;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -44,6 +80,9 @@ export const useStore = create<AppState>((set, get) => ({
   activeTab: DEFAULT_ACTIVE_TAB,
   systemPrompt: buildDefaultSystemPrompt(DEFAULT_ACTIVE_TAB),
   translateError: null,
+  sourceLanguage: DEFAULT_SOURCE_LANGUAGE,
+  targetLanguages: DEFAULT_TARGET_LANGUAGES,
+  providerConfigs: loadProviderConfigs(),
 
   setEntries: (entries) => set({ entries, selectedIndices: [] }),
   setFileName: (fileName) => set({ fileName }),
@@ -87,6 +126,18 @@ export const useStore = create<AppState>((set, get) => ({
 
   setSystemPrompt: (systemPrompt) => set({ systemPrompt }),
   setTranslateError: (translateError) => set({ translateError }),
+  setSourceLanguage: (sourceLanguage) => set({ sourceLanguage }),
+  setTargetLanguages: (targetLanguages) => {
+    const state = get();
+    const activeTabInList = targetLanguages.some((l) => l.id === state.activeTab);
+    set({
+      targetLanguages,
+      activeTab: activeTabInList ? state.activeTab : (targetLanguages[0]?.id ?? DEFAULT_ACTIVE_TAB),
+      systemPrompt: activeTabInList
+        ? state.systemPrompt
+        : buildDefaultSystemPrompt(targetLanguages[0]?.id ?? DEFAULT_ACTIVE_TAB),
+    });
+  },
   translatedCount: (languageId) =>
     get().entries.filter((e) => e.translations[languageId]).length,
 
@@ -190,5 +241,15 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       return { entries };
+    }),
+
+  setProviderConfig: (providerId, config) =>
+    set((state) => {
+      const newConfigs = {
+        ...state.providerConfigs,
+        [providerId]: { ...state.providerConfigs[providerId], ...config },
+      };
+      saveProviderConfigs(newConfigs);
+      return { providerConfigs: newConfigs };
     }),
 }));

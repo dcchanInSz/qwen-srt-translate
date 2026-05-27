@@ -3,6 +3,7 @@ import { generateText, LanguageModel } from "ai";
 function buildPrompt(
   entries: { index: number; text: string }[],
   fullContext: string[],
+  sourceLanguage: string,
   targetLanguage: string
 ): string {
   const script = fullContext.map((line, i) => `${i + 1}. ${line}`).join("\n");
@@ -14,9 +15,9 @@ ${script}
 [SEGMENTS TO TRANSLATE]
 ${segments}
 
-Translate each segment above into ${targetLanguage}. Important rules:
+Translate each segment above from ${sourceLanguage} into ${targetLanguage}. Important rules:
 - Output ONLY the translations, separated by "---" (three dashes on their own line)
-- Do NOT include the original English text
+- Do NOT include the original text
 - Do NOT add arrows, prefixes, or numbering
 - One translation per segment, in the same order as input`;
 }
@@ -33,14 +34,16 @@ export async function translateWithAgent(
   systemPrompt: string,
   entries: { index: number; text: string }[],
   fullContext: string[],
+  sourceLanguage: string,
   targetLanguage: string
 ): Promise<{ index: number; text: string }[]> {
   console.log("[agent] starting translation", {
     segmentCount: entries.length,
+    sourceLanguage,
     targetLanguage,
   });
 
-  const prompt = buildPrompt(entries, fullContext, targetLanguage);
+  const prompt = buildPrompt(entries, fullContext, sourceLanguage, targetLanguage);
 
   const result = await generateText({
     model: provider,
@@ -50,7 +53,7 @@ export async function translateWithAgent(
 
   console.log("[agent] raw output length", result.text.length);
 
-  let translatedTexts = splitTranslations(result.text);
+  const translatedTexts = splitTranslations(result.text);
 
   const results = entries.map((entry, i) => ({
     index: entry.index,
@@ -65,7 +68,7 @@ export async function translateWithAgent(
     console.log("[agent] retrying empty indices:", emptyIndices);
     const retryEntries = emptyIndices.map((i) => entries[i]);
     const retrySegments = retryEntries.map((e) => e.text).join("\n---\n");
-    const retryPrompt = `Translate each segment into ${targetLanguage}. Output ONLY translations separated by "---". Do NOT include original text.\n\n${retrySegments}`;
+    const retryPrompt = `Translate each segment from ${sourceLanguage} into ${targetLanguage}. Output ONLY translations separated by "---". Do NOT include original text.\n\n${retrySegments}`;
 
     try {
       const retryResult = await generateText({

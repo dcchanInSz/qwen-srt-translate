@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import { useStore } from "@/store/useStore";
 import { parseSrt } from "@/lib/srt-parser";
 import { ExportFormat } from "@/types/subtitle";
-import { TARGET_LANGUAGES } from "@/lib/languages";
+import ConfigDialog from "@/components/ConfigDialog";
+import { useI18n } from "@/i18n";
 
 async function exportAllLanguages(entries: ReturnType<typeof useStore.getState>["entries"], format: ExportFormat, baseName: string) {
   const JSZip = (await import("jszip")).default;
@@ -21,7 +22,9 @@ async function exportAllLanguages(entries: ReturnType<typeof useStore.getState>[
   };
   const ext = extMap[format];
 
-  const allLanguages = [{ id: "en", name: "English" }, ...TARGET_LANGUAGES];
+  const store = useStore.getState();
+  const sourceLang = { id: store.sourceLanguage.id, name: store.sourceLanguage.label };
+  const allLanguages = [sourceLang, ...store.targetLanguages.map((l) => ({ id: l.id, name: l.label }))];
 
   for (const lang of allLanguages) {
     let content: string;
@@ -47,10 +50,12 @@ async function exportAllLanguages(entries: ReturnType<typeof useStore.getState>[
 }
 
 export default function HeaderBar() {
+  const { t, locale, setLocale } = useI18n();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setEntries, setFileName, entries, fileName } = useStore();
   const [exportFormat, setExportFormat] = useState<ExportFormat | "">("");
   const [exporting, setExporting] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
 
   const handleLoad = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,51 +83,71 @@ export default function HeaderBar() {
   };
 
   return (
-    <header className="flex items-center gap-4 px-4 py-2 border-b bg-gray-50 shrink-0">
-      <h1 className="text-lg font-bold whitespace-nowrap">SRT 字幕翻译</h1>
+    <>
+      <header className="flex items-center gap-4 px-4 py-2 border-b bg-gray-50 shrink-0">
+        <h1 className="text-lg font-bold whitespace-nowrap">{t("app.title")}</h1>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".srt"
-        onChange={handleLoad}
-        className="hidden"
-      />
-      <button
-        onClick={() => fileInputRef.current?.click()}
-        className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
-      >
-        加载 SRT
-      </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".srt"
+          onChange={handleLoad}
+          className="hidden"
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+        >
+          {t("header.loadSrt")}
+        </button>
 
-      {fileName && (
-        <span className="text-sm text-gray-600 truncate max-w-xs">{fileName}</span>
-      )}
+        {fileName && (
+          <span className="text-sm text-gray-600 truncate max-w-xs">{fileName}</span>
+        )}
 
-      <div className="flex-1" />
+        <div className="flex-1" />
 
-      {entries.length > 0 && (
-        <>
-          <select
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
-            className="px-3 py-1 border rounded text-sm"
-          >
-            <option value="">导出格式…</option>
-            <option value="srt">SRT</option>
-            <option value="vtt">VTT</option>
-            <option value="ass">ASS</option>
-            <option value="json">JSON</option>
-          </select>
-          <button
-            onClick={handleExport}
-            disabled={!exportFormat || exporting}
-            className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
-          >
-            {exporting ? "导出中…" : "导出全部 (ZIP)"}
-          </button>
-        </>
-      )}
-    </header>
+        <button
+          onClick={() => setLocale(locale === "zh" ? "en" : "zh")}
+          className="px-2 py-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded text-sm"
+          title="Switch Language / 切换语言"
+        >
+          {locale === "zh" ? "EN" : "中"}
+        </button>
+
+        <button
+          onClick={() => setConfigOpen(true)}
+          title={t("header.settingsTitle")}
+          className="px-2 py-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded text-sm"
+        >
+          {t("header.settings")}
+        </button>
+
+        {entries.length > 0 && (
+          <>
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+              className="px-3 py-1 border rounded text-sm"
+            >
+              <option value="">{t("header.exportFormat")}</option>
+              <option value="srt">SRT</option>
+              <option value="vtt">VTT</option>
+              <option value="ass">ASS</option>
+              <option value="json">JSON</option>
+            </select>
+            <button
+              onClick={handleExport}
+              disabled={!exportFormat || exporting}
+              className="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600 disabled:opacity-50"
+            >
+              {exporting ? t("header.exporting") : t("header.exportAll")}
+            </button>
+          </>
+        )}
+      </header>
+
+      <ConfigDialog open={configOpen} onClose={() => setConfigOpen(false)} />
+    </>
   );
 }

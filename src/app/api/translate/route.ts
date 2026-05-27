@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   try {
     const body: TranslateRequest = await request.json();
-    const { model, systemPrompt, context, entries, targetLanguages } = body;
+    const { model, systemPrompt, context, entries, targetLanguages, sourceLanguage, providerConfig } = body;
     const provider = parseProvider(body.provider);
 
     console.log("[translate] request received", {
@@ -15,10 +15,11 @@ export async function POST(request: NextRequest) {
       entryCount: entries?.length ?? 0,
       contextLines: context?.length ?? 0,
       targetLanguages,
+      sourceLanguage,
     });
 
     if (provider !== "google" && !model) {
-      return NextResponse.json({ error: "请选择模型" }, { status: 400 });
+      return NextResponse.json({ error: "No model selected" }, { status: 400 });
     }
 
     const texts = entries.map((e) => e.text);
@@ -40,7 +41,9 @@ export async function POST(request: NextRequest) {
           systemPrompt,
           texts,
           context,
-          lang
+          sourceLanguage,
+          lang,
+          providerConfig
         );
 
         const items = entries.map((entry, j) => ({
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
         translations.push({
           lang,
           items: [],
-          error: err instanceof Error ? err.message : "翻译失败",
+          error: err instanceof Error ? err.message : "Translation failed",
         });
       }
     }
@@ -78,7 +81,7 @@ export async function POST(request: NextRequest) {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "翻译失败" },
+      { error: error instanceof Error ? error.message : "Translation failed" },
       { status: 500 }
     );
   }

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useStore } from "@/store/useStore";
-import { TARGET_LANGUAGES } from "@/lib/languages";
+import { useI18n } from "@/i18n";
 
 const TIME_REGEX = /^\d{2}:\d{2}:\d{2}[,.]\d{3}$/;
 
@@ -17,6 +17,7 @@ function EditableCell({
   className?: string;
   validate?: (v: string) => boolean;
 }) {
+  const { t } = useI18n();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [error, setError] = useState(false);
@@ -72,18 +73,19 @@ function EditableCell({
       onDoubleClick={startEditing}
       className={`p-1 text-sm cursor-pointer hover:bg-gray-100 rounded min-h-[24px] ${className}`}
     >
-      {value || <span className="text-gray-300">双击编辑</span>}
+      {value || <span className="text-gray-300">{t("table.doubleClick")}</span>}
     </div>
   );
 }
 
 export default function SubtitleTable() {
-  const { entries, selectedIndices, activeTab, updateEntry, updateTranslation, toggleSelected, moveEntry, splitEntry, mergeWithAbove, setActiveTab } = useStore();
+  const { entries, selectedIndices, activeTab, updateEntry, updateTranslation, toggleSelected, moveEntry, splitEntry, mergeWithAbove, setActiveTab, sourceLanguage, targetLanguages } = useStore();
+  const { t } = useI18n();
 
   if (entries.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-gray-400">
-        加载 SRT 文件开始使用
+        {t("table.empty")}
       </div>
     );
   }
@@ -91,7 +93,7 @@ export default function SubtitleTable() {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex gap-1 px-2 pt-2 pb-1 border-b bg-white shrink-0 overflow-x-auto">
-        {TARGET_LANGUAGES.map((lang) => (
+        {targetLanguages.map((lang) => (
           <button
             key={lang.id}
             onClick={() => setActiveTab(lang.id)}
@@ -125,13 +127,15 @@ export default function SubtitleTable() {
                 />
               </th>
               <th className="w-10 p-2 text-left text-xs font-medium text-gray-500 border-b">#</th>
-              <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">开始</th>
-              <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">结束</th>
-              <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">原文 (English)</th>
+              <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">{t("table.start")}</th>
+              <th className="w-28 p-2 text-left text-xs font-medium text-gray-500 border-b">{t("table.end")}</th>
               <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">
-                译文 <span className="text-blue-500">({TARGET_LANGUAGES.find((l) => l.id === activeTab)?.label})</span>
+                {t("table.original", { lang: sourceLanguage.label })}
               </th>
-              <th className="w-24 p-2 text-left text-xs font-medium text-gray-500 border-b">操作</th>
+              <th className="p-2 text-left text-xs font-medium text-gray-500 border-b">
+                {t("table.translation")} <span className="text-blue-500">({targetLanguages.find((l) => l.id === activeTab)?.label})</span>
+              </th>
+              <th className="w-24 p-2 text-left text-xs font-medium text-gray-500 border-b">{t("table.actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -179,7 +183,7 @@ export default function SubtitleTable() {
                       <button
                         onClick={() => moveEntry(idx, -1)}
                         disabled={idx === 0}
-                        title="与上一条交换译文"
+                        title={t("table.moveUp")}
                         className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                       >
                         ▲
@@ -187,14 +191,14 @@ export default function SubtitleTable() {
                       <button
                         onClick={() => moveEntry(idx, 1)}
                         disabled={idx === entries.length - 1}
-                        title="与下一条交换译文"
+                        title={t("table.moveDown")}
                         className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                       >
                         ▼
                       </button>
                       <button
                         onClick={() => splitEntry(idx)}
-                        title="拆分"
+                        title={t("table.split")}
                         className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
                       >
                         ⑊
@@ -202,7 +206,7 @@ export default function SubtitleTable() {
                       <button
                         onClick={() => mergeWithAbove(idx)}
                         disabled={idx === 0}
-                        title="与上一条合并"
+                        title={t("table.merge")}
                         className="px-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded disabled:opacity-30"
                       >
                         ↥

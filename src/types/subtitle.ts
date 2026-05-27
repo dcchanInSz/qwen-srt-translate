@@ -7,7 +7,7 @@ export interface SubtitleEntry {
   translatedAt?: Record<string, number>;
 }
 
-import type { LlmProvider } from "@/lib/llm";
+import type { LlmProvider, ProviderConfig } from "@/lib/llm";
 
 export interface TranslateRequest {
   provider: LlmProvider;
@@ -16,6 +16,8 @@ export interface TranslateRequest {
   context: string[];
   entries: { index: number; text: string }[];
   targetLanguages: string[];
+  sourceLanguage: string;
+  providerConfig: ProviderConfig;
 }
 
 export interface TranslateResponse {

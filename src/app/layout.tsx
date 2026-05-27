@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import ClientLayout from "@/components/ClientLayout";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Qwen SRT 字幕翻译",
-  description: "基于 Qwen 大模型的交互式字幕翻译工具",
+  title: "SRT Subtitle Translator",
+  description: "Interactive subtitle translation tool powered by LLMs",
 };
 
 export default function RootLayout({
@@ -24,10 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ClientLayout>{children}</ClientLayout>
+      </body>
     </html>
   );
 }

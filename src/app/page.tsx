@@ -7,9 +7,11 @@ import SubtitleTable from "@/components/SubtitleTable";
 import StatusBar from "@/components/StatusBar";
 import { useStore } from "@/store/useStore";
 import { parseSrt } from "@/lib/srt-parser";
+import { useI18n } from "@/i18n";
 
 export default function Home() {
   const { entries } = useStore();
+  const { t } = useI18n();
   const [dragging, setDragging] = useState(false);
 
   const loadFile = useCallback((file: File) => {
@@ -60,7 +62,7 @@ export default function Home() {
 
       {dragging && entries.length === 0 && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 border-4 border-dashed border-blue-400 rounded-lg m-2 pointer-events-none">
-          <p className="text-2xl font-bold text-blue-500">拖放 SRT 文件到此处</p>
+          <p className="text-2xl font-bold text-blue-500">{t("page.dropHint")}</p>
         </div>
       )}
     </div>
