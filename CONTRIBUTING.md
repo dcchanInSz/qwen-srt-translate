@@ -1,4 +1,4 @@
-# Contributing to Qwen SRT Translate
+# Contributing to AI SRT Translate
 
 Thank you for your interest in contributing! This document outlines the process for contributing to this project.
 
@@ -7,8 +7,8 @@ Thank you for your interest in contributing! This document outlines the process 
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/qwen-srt-translate.git
-   cd qwen-srt-translate
+git clone https://github.com/YOUR_USERNAME/ai-srt-translate.git
+    cd ai-srt-translate
    ```
 3. Install dependencies:
    ```bash

@@ -15,4 +15,4 @@
 - Docker support with docker-compose
 - Drag-and-drop SRT file loading
 
-[0.1.0]: https://github.com/dcchanInSz/qwen-srt-translate/releases/tag/v0.1.0
+[0.1.0]: https://github.com/dcchanInSz/ai-srt-translate/releases/tag/v0.1.0

@@ -1,5 +1,5 @@
 {
-  "name": "qwen-srt-translate",
+  "name": "ai-srt-translate",
   "version": "0.1.0",
   "private": false,
   "description": "Local-first subtitle translation tool using Ollama / LM Studio LLMs with multi-language support and multi-format export.",
@@ -15,13 +15,13 @@
     "translate",
     "local-llm"
   ],
-  "homepage": "https://github.com/dcchanInSz/qwen-srt-translate#readme",
+  "homepage": "https://github.com/dcchanInSz/ai-srt-translate#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dcchanInSz/qwen-srt-translate.git"
+    "url": "git+https://github.com/dcchanInSz/ai-srt-translate.git"
   },
   "bugs": {
-    "url": "https://github.com/dcchanInSz/qwen-srt-translate/issues"
+    "url": "https://github.com/dcchanInSz/ai-srt-translate/issues"
   },
   "license": "MIT",
   "author": "dcchanInSz",
